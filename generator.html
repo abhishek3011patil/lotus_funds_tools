@@ -6,30 +6,189 @@
   <title>Email Template Builder — Gmail-safe</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{--header-color:rgb(170,3,101)}
-    body{font-family:Inter, Arial, Helvetica, sans-serif;margin:0;background:#f1f5f8;color:#111}
-    .wrap{max-width:980px;margin:18px auto;padding:12px;box-sizing:border-box}
-    .editor{background:#fff;border-radius:8px;padding:14px;box-shadow:0 6px 18px rgba(10,20,30,0.06);margin-bottom:14px}
-    label{display:block;font-size:13px;margin-top:10px;color:#333}
-    input[type="text"], textarea{width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:6px;margin-top:6px;background:#fbfdff}
-    textarea{min-height:90px}
-    .small{font-size:12px;color:#666}
-    .btn{display:inline-block;padding:9px 12px;border-radius:8px;border:none;background:#0f172a;color:#fff;cursor:pointer;margin-top:12px}
-    .btn.secondary{background:#475569}
-    .logoPreview img{height:52px;border-radius:6px;object-fit:contain;border:1px solid #eee;padding:4px;background:#fff;margin-right:6px}
-    .guidelines{background:#0f172a;color:#fff;padding:10px;border-radius:6px;margin-top:10px;font-size:13px}
-    /* preview area */
-    #previewContainer{background:#d0d0d0;padding:18px;border-radius:8px}
-    /* make preview area mobile-like (stacked) */
-    .previewPhone{max-width:620px;margin:0 auto;background:transparent}
-    .previewFrame{background:#ffffff;border-radius:8px;overflow:hidden}
-    .note{font-size:13px;color:#475569;margin-top:8px}
+  :root {
+    --header-color: rgb(170,3,101);
+    --bg-light: #f1f5f8;
+    --bg-panel: #ffffff;
+    --text-main: #111;
+    --text-secondary: #555;
+    --border-light: #e2e8f0;
+    --accent-dark: #0f172a;
+    --accent-mid: #475569;
+    --radius: 10px;
+    --shadow: 0 6px 18px rgba(10,20,30,0.06);
+  }
 
-    /* small screens adjustments for the editor to be comfortable */
-    @media (max-width:720px){
-      .wrap{padding:10px}
+  body {
+    font-family: 'Inter', Arial, Helvetica, sans-serif;
+    margin: 0;
+    background: var(--bg-light);
+    color: var(--text-main);
+  }
+
+  .wrap {
+    max-width: 980px;
+    margin: 18px auto;
+    padding: 14px;
+    box-sizing: border-box;
+  }
+
+  .editor {
+    background: var(--bg-panel);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+    border: 1px solid #f0f0f0;
+  }
+
+  h2 {
+    font-weight: 700;
+    margin: 0;
+    font-size: 22px;
+    color: var(--accent-dark);
+  }
+
+  p.small {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    margin-top: 14px;
+    font-weight: 600;
+    color: var(--accent-dark);
+  }
+
+  input[type="text"], textarea, input[type="file"] {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    margin-top: 6px;
+    background: #fbfdff;
+    font-size: 14px;
+    transition: border 0.2s, box-shadow 0.2s;
+  }
+
+  input[type="text"]:focus, textarea:focus, input[type="file"]:focus {
+    outline: none;
+    border-color: var(--header-color);
+    box-shadow: 0 0 0 3px rgba(170,3,101,0.15);
+  }
+
+  textarea {
+    min-height: 90px;
+    resize: vertical;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: none;
+    background: var(--header-color);
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .btn:hover {
+    background: rgb(150,2,88);
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+  }
+
+  .btn.secondary {
+    background: var(--accent-mid);
+  }
+
+  .btn.secondary:hover {
+    background: #334155;
+  }
+
+  .logoPreview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .logoPreview img {
+    height: 52px;
+    border-radius: 6px;
+    object-fit: contain;
+    border: 1px solid #eee;
+    padding: 4px;
+    background: #fff;
+  }
+
+  .guidelines {
+    background: var(--accent-dark);
+    color: #fff;
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 14px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .guidelines strong {
+    font-size: 14px;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .guidelines ul {
+    margin: 6px 0 0;
+    padding-left: 18px;
+  }
+
+  /* preview area */
+  #previewContainer {
+    background: #d0d0d0;
+    padding: 18px;
+    border-radius: 8px;
+  }
+
+  .previewPhone {
+    max-width: 620px;
+    margin: 0 auto;
+    background: transparent;
+  }
+
+  .previewFrame {
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+  }
+
+  .note {
+    font-size: 13px;
+    color: var(--accent-mid);
+    margin-top: 8px;
+  }
+
+  /* small screens adjustments */
+  @media (max-width: 720px) {
+    .wrap {
+      padding: 10px;
     }
-  </style>
+    .btn {
+      width: 100%;
+      text-align: center;
+    }
+  }
+</style>
+
 </head>
 <body>
   <div class="wrap">
