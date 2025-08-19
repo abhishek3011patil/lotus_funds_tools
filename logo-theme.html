@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Morning Report — Logo & Theme Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--theme:#0056a3}
+    *{box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:#f7f7fb;color:#111;margin:0}
+    header.app{position:sticky;top:0;background:#fff;border-bottom:1px solid #eee;padding:14px 18px;display:flex;gap:12px;align-items:center;z-index:10}
+    .container{max-width:1100px;margin:0 auto;padding:18px}
+    h1{font-size:1.6rem;margin:0}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .card{background:#fff;border:1px solid #eee;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+    .card h2{margin:0 0 8px;font-size:1.1rem}
+    .btn{appearance:none;border:0;background:var(--theme);color:#fff;font-weight:700;padding:10px 14px;border-radius:10px;cursor:pointer}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .muted{color:#666;font-size:.92rem}
+    .stack{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    input[type="file"]{display:block;width:100%}
+    textarea{width:100%;min-height:90px;border:1px solid #e2e2e2;border-radius:10px;padding:10px;font-family:inherit}
+    #reportPreviewWrap{overflow:auto;border:1px dashed #ddd;border-radius:14px;background:#fff}
+    #reportPreview{margin:0 auto;padding:0;background:#fff}
+    .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .thumbs .thumb{border:1px solid #eee;border-radius:10px;overflow:hidden;width:84px;height:84px;display:flex;align-items:center;justify-content:center;background:#fafafa}
+    .status{font-size:.9rem;white-space:pre-line}
+    .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;background:#f1f1f5;border:1px solid #e4e4ea;border-bottom-width:2px;border-radius:8px;padding:2px 6px}
+    /* Hidden render area for crisp PNG capture */
+    #renderSandbox{position:fixed;left:-10000px;top:-10000px;background:#fff;padding:0;margin:0}
+    /* Constrain logos in sandbox/export */
+    #renderSandbox header img,
+    #renderSandbox .logo img {
+      width: 180px !important;
+      height: 60px !important;
+      object-fit: contain;
+    }
+  </style>
+  <!-- External libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" defer></script>
+</head>
+<body>
+  <header class="app">
+    <h1>Logo & Theme Generator</h1>
+    <div class="muted">Step 2 · Apply logos, colors, and export HTML+PNG</div>
+    <div style="margin-left:auto" class="stack">
+      <button id="backBtn" class="btn" style="background:#666">← Back</button>
+      <button id="generateBtn" class="btn">Generate ZIP</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="row">
+      <div class="card">
+        <h2>1) Upload one or more logos</h2>
+        <input id="logoInput" type="file" accept="image/*" multiple />
+        <div class="muted" style="margin-top:8px">Tip: name files like <span class="kbd">www.abccompany.com.png</span> to auto-set footer link.</div>
+        <div class="thumbs" id="thumbs"></div>
+        <h2 style="margin-top:16px">(Optional) Logo URLs — one per line</h2>
+        <textarea id="logoUrls" placeholder="https://example.com/path/logo.png\nhttps://...\n"></textarea>
+        <div class="muted">Remote images must allow CORS to extract colors reliably.</div>
+      </div>
+
+      <div class="card">
+        <h2>2) Report preview (from Builder)</h2>
+        <div class="muted">Loaded from <span class="kbd">localStorage.reportHTML</span>. This is the base used for each logo.</div>
+        <div id="reportPreviewWrap">
+          <div id="reportPreview"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h2>3) Status</h2>
+      <div class="status" id="status">Idle</div>
+    </div>
+  </div>
+
+  <div id="renderSandbox"></div>
+
+<script>
+(function(){
+  const DEFAULT_THEME = '#0056a3';
+  const statusEl = document.getElementById('status');
+  const previewEl = document.getElementById('reportPreview');
+  const thumbsEl = document.getElementById('thumbs');
+  const logoInput = document.getElementById('logoInput');
+  const logoUrls = document.getElementById('logoUrls');
+  const sandbox = document.getElementById('renderSandbox');
+  const backBtn = document.getElementById('backBtn');
+  const generateBtn = document.getElementById('generateBtn');
+
+  backBtn.addEventListener('click',()=> history.back());
+
+  const baseReportHTML = localStorage.getItem('reportHTML') || 
+    '<p style="padding:16px">No report found in localStorage. Go back and press "Submit & Continue".</p>';
+  previewEl.innerHTML = baseReportHTML;
+
+  function updatePreviewWidth(){ previewEl.style.width = '900px'; }
+  updatePreviewWidth();
+
+  const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+  async function fileToDataURL(file){
+    return new Promise((resolve,reject)=>{
+      const fr = new FileReader();
+      fr.onload = ()=>resolve(fr.result);
+      fr.onerror = reject;
+      fr.readAsDataURL(file);
+    });
+  }
+
+  async function dataURLToImage(dataURL){
+    return new Promise((resolve,reject)=>{
+      const img = new Image();
+      img.onload = ()=>resolve(img);
+      img.onerror = reject;
+      img.src = dataURL;
+    });
+  }
+
+  async function waitForImages(node){
+    const imgs = node.querySelectorAll("img");
+    await Promise.all([...imgs].map(img=>{
+      if(img.complete) return;
+      return new Promise(res=>{
+        img.onload=res; img.onerror=res;
+      });
+    }));
+  }
+
+  function rgbToHex([r,g,b]){ const h=v=>v.toString(16).padStart(2,"0"); return `#${h(r)}${h(g)}${h(b)}`; }
+  function isTooDark([r,g,b]){ return (0.2126*r + 0.7152*g + 0.0722*b) < 40; }
+  function isLowSaturation([r,g,b]){ const max=Math.max(r,g,b),min=Math.min(r,g,b); return max>0 && (max-min)/max <0.15; }
+
+  function pickDominantColorFromImage(img){
+    try{
+      const ct = new ColorThief();
+      const palette = ct.getPalette(img,8) || [];
+      for(const rgb of palette){ if(!isTooDark(rgb) && !isLowSaturation(rgb)) return rgbToHex(rgb); }
+      for(const rgb of palette){ if(!isTooDark(rgb)) return rgbToHex(rgb); }
+    }catch(e){ console.warn("ColorThief failed", e); }
+    return DEFAULT_THEME;
+  }
+
+  function extractWebsiteFromName(name){
+    const lower = name.toLowerCase();
+    const m1 = lower.match(/(www\.[a-z0-9\-\.]+\.[a-z]{2,})/i);
+    if(m1) return m1[1];
+    const m2 = lower.match(/([a-z0-9\-\.]+\.[a-z]{2,})/i);
+    if(m2) return m2[1];
+    return "www.example.com";
+  }
+
+  function serializeDoc(dom){ return "<!DOCTYPE html>"+dom.documentElement.outerHTML; }
+
+  function applyThemeAndBrand({html, logoDataURL, themeHex, website}){
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html,"text/html");
+    const header = doc.querySelector("header img");
+    if(header && logoDataURL){
+      header.src = logoDataURL;
+      header.removeAttribute("srcset");
+      header.width = 180;
+      header.height = 60;
+      header.style.objectFit="contain";
+    }
+
+    let htmlStr = doc.documentElement.outerHTML;
+    htmlStr = htmlStr.replace(/#0056a3/gi, themeHex);
+    htmlStr = htmlStr.replace(/--theme\s*:\s*#[0-9a-f]{6}/gi, `--theme:${themeHex}`);
+    const footerMatch = htmlStr.match(/<footer[\s\S]*?<\/footer>/i);
+    if(footerMatch){
+      let block = footerMatch[0];
+      block = /www\.[^\s<]+/i.test(block) ? 
+        block.replace(/www\.[^\s<]+/i, website) :
+        block.replace(/<p[^>]*>(.*?)<\/p>/i, m=>m.replace(/>(.*?)</, `><strong>${website} |</strong> $1<`));
+      htmlStr = htmlStr.replace(footerMatch[0], block);
+    }
+    return serializeDoc(parser.parseFromString(htmlStr,"text/html"));
+  }
+
+  async function collectLogos(){
+    const items=[];
+    for(const file of (logoInput.files||[])){
+      const dataURL=await fileToDataURL(file);
+      items.push({label:file.name,dataURL});
+    }
+    return items;
+  }
+
+  async function renderPNGFromHTML(htmlString){
+    sandbox.innerHTML = ""; 
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = htmlString;
+    sandbox.appendChild(wrapper);
+
+    let node = wrapper.querySelector("#report") || wrapper;
+    node.style.width="900px"; 
+    node.style.background="#fff";
+
+    // Force logo resizing inside sandbox
+    const logoImg = node.querySelector("header img") || node.querySelector(".logo img");
+    if(logoImg){
+      logoImg.width = 180;
+      logoImg.height = 60;
+      logoImg.style.objectFit="contain";
+    }
+
+    await waitForImages(node);
+    await sleep(200); 
+
+    const dataUrl = await htmlToImage.toPng(node,{pixelRatio:2,backgroundColor:"#fff",cacheBust:true});
+    return (await fetch(dataUrl)).blob();
+  }
+
+  function updateStatus(msg){ statusEl.textContent=msg; }
+
+  logoInput.addEventListener("change", collectLogos);
+
+  generateBtn.addEventListener("click", async ()=>{
+    generateBtn.disabled=true;
+    try{
+      updateStatus("Collecting logos...");
+      const logos = await collectLogos();
+      if(!logos.length){ updateStatus("No logos selected"); generateBtn.disabled=false; return; }
+
+      const zip = new JSZip();
+      const folder = zip.folder("morning-report");
+
+      for(let i=0;i<logos.length;i++){
+        const item = logos[i];
+        updateStatus(`Processing ${i+1}/${logos.length} — ${item.label}`);
+
+        const img = await dataURLToImage(item.dataURL);
+        let themeHex = pickDominantColorFromImage(img);
+        if(/^#0+$/.test(themeHex)) themeHex = DEFAULT_THEME;
+
+        const website = extractWebsiteFromName(item.label);
+        const htmlOut = applyThemeAndBrand({html: baseReportHTML, logoDataURL:item.dataURL, themeHex, website});
+        const safeBase = website.replace(/[^a-z0-9\-\.]/gi,'_');
+        const pngBlob = await renderPNGFromHTML(htmlOut);
+
+        folder.file(`${safeBase}.html`, htmlOut);
+        folder.file(`${safeBase}.png`, pngBlob);
+      }
+
+      updateStatus("Bundling ZIP...");
+      const zipBlob = await zip.generateAsync({type:"blob"});
+      saveAs(zipBlob, `MorningReport_${new Date().toISOString().slice(0,10)}.zip`);
+      updateStatus("Done!");
+    }catch(e){ console.error(e); updateStatus("Error: "+e.message); }
+    finally{ generateBtn.disabled=false; }
+  });
+})();
+</script>
+</body>
+</html>
