@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Email Template Builder — Gmail-safe</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+  :root {
+    --header-color: rgb(170,3,101);
+    --bg-light: #f1f5f8;
+    --bg-panel: #ffffff;
+    --text-main: #111;
+    --text-secondary: #555;
+    --border-light: #e2e8f0;
+    --accent-dark: #0f172a;
+    --accent-mid: #475569;
+    --radius: 10px;
+    --shadow: 0 6px 18px rgba(10,20,30,0.06);
+  }
+
+  body {
+    font-family: 'Inter', Arial, Helvetica, sans-serif;
+    margin: 0;
+    background: var(--bg-light);
+    color: var(--text-main);
+  }
+
+  .wrap {
+    max-width: 980px;
+    margin: 18px auto;
+    padding: 14px;
+    box-sizing: border-box;
+  }
+
+  .editor {
+    background: var(--bg-panel);
+    border-radius: var(--radius);
+    padding: 18px;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+    border: 1px solid #f0f0f0;
+  }
+
+  h2 {
+    font-weight: 700;
+    margin: 0;
+    font-size: 22px;
+    color: var(--accent-dark);
+  }
+
+  p.small {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+  }
+
+  label {
+    display: block;
+    font-size: 13px;
+    margin-top: 14px;
+    font-weight: 600;
+    color: var(--accent-dark);
+  }
+
+  input[type="text"], textarea, input[type="file"] {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--border-light);
+    border-radius: 6px;
+    margin-top: 6px;
+    background: #fbfdff;
+    font-size: 14px;
+    transition: border 0.2s, box-shadow 0.2s;
+  }
+
+  input[type="text"]:focus, textarea:focus, input[type="file"]:focus {
+    outline: none;
+    border-color: var(--header-color);
+    box-shadow: 0 0 0 3px rgba(170,3,101,0.15);
+  }
+
+  textarea {
+    min-height: 90px;
+    resize: vertical;
+  }
+
+  .btn {
+    display: inline-block;
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: none;
+    background: var(--header-color);
+    color: #fff;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background 0.2s, transform 0.1s;
+  }
+
+  .btn:hover {
+    background: rgb(150,2,88);
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+  }
+
+  .btn.secondary {
+    background: var(--accent-mid);
+  }
+
+  .btn.secondary:hover {
+    background: #334155;
+  }
+
+  .logoPreview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+  }
+
+  .logoPreview img {
+    height: 52px;
+    border-radius: 6px;
+    object-fit: contain;
+    border: 1px solid #eee;
+    padding: 4px;
+    background: #fff;
+  }
+
+  .guidelines {
+    background: var(--accent-dark);
+    color: #fff;
+    padding: 12px;
+    border-radius: 6px;
+    margin-top: 14px;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .guidelines strong {
+    font-size: 14px;
+    display: block;
+    margin-bottom: 6px;
+  }
+
+  .guidelines ul {
+    margin: 6px 0 0;
+    padding-left: 18px;
+  }
+
+  /* preview area */
+  #previewContainer {
+    background: #d0d0d0;
+    padding: 18px;
+    border-radius: 8px;
+  }
+
+  .previewPhone {
+    max-width: 620px;
+    margin: 0 auto;
+    background: transparent;
+  }
+
+  .previewFrame {
+    background: #ffffff;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #e5e7eb;
+  }
+
+  .note {
+    font-size: 13px;
+    color: var(--accent-mid);
+    margin-top: 8px;
+  }
+
+  /* small screens adjustments */
+  @media (max-width: 720px) {
+    .wrap {
+      padding: 10px;
+    }
+    .btn {
+      width: 100%;
+      text-align: center;
+    }
+  }
+</style>
+
+</head>
+<body>
+  <div class="wrap">
+    <div class="editor">
+      <h2 style="margin:0">Email Template Builder — Gmail-safe</h2>
+      <p class="small" style="margin:6px 0 0">Stacked vertical editor + mobile-friendly preview. Upload local logos and the first logo's dominant color will be applied to header backgrounds only.</p>
+
+      <label>Upload logos (local) — top of email (multiple allowed)</label>
+      <input id="logoFiles" type="file" accept="image/*" multiple>
+      <div class="logoPreview" id="logoPreview"></div>
+
+      <div class="guidelines">
+        <strong>Editing Guidelines</strong>
+        <ul style="margin:6px 0 0;padding-left:18px">
+          <li>Use <code>**bold text**</code> to make text bold (tool will convert to <code>&lt;b&gt;</code> for email).</li>
+          <li>Press Enter twice to create a new paragraph.</li>
+          <li>Use <code>&lt;br&gt;</code> for a single line break when needed.</li>
+          <li>Keep sentences short (1–2 lines) for mobile readability.</li>
+        </ul>
+      </div>
+
+      <!-- Pre-filled fields using user's previous template text -->
+      <label>Morning Action header text</label>
+      <input id="inp_morningHeader" type="text" value="Morning Action @ 7 AM – Friday, August 8th 2025">
+
+      <label>Top main image URL (or leave blank to use first available uploaded image)</label>
+      <input id="inp_main_img" type="text" placeholder="https://iili.io/FsGbN9t.jpg" value="https://iili.io/FsGbN9t.jpg">
+
+      <label>Lead paragraph(s) — (uses double-Enter for paragraph)</label>
+      <textarea id="inp_lead">Gift Nifty is indicating a cautious start for the benchmark Nifty.
+
+That brings us to our call of the day which suggests volatility is likely to be the hallmark of the day, as the benchmark is most likely to open a bit lower but the good news is that downside for the day is likely to be well supported.</textarea>
+
+      <label>7:00 AM GLOBAL UPDATE — image URL</label>
+      <input id="inp_global_img" type="text" value="https://iili.io/Fss1Ub9.png">
+      <label>Global update supporting text</label>
+      <textarea id="inp_global_text">GIFT Nifty : (-46, 24649)
+
+Dow Futures: (+116, 44085)
+
+Nasdaq 100 Futures (+76, 23466)
+
+Nikkei (+821, 41881)</textarea>
+
+      <label>MARKET TRENDS — image URL</label>
+      <input id="inp_trends_img" type="text" value="https://iili.io/Fss1Ub9.png">
+
+      <label>TECHNICALS — 3 image URLs (comma separated)</label>
+      <input id="inp_technical_imgs" type="text" value="https://5b9065186b.imgdist.com/pub/bfra/xx1rrbxw/pe0/8t2/7hg/nifty.png, https://5b9065186b.imgdist.com/pub/bfra/xx1rrbxw/4pn/l6f/sge/banknifty.png, https://5b9065186b.imgdist.com/pub/bfra/xx1rrbxw/jsu/li1/f9n/sen.png">
+
+      <label>WHAT HAPPENED AT WALL STREET — short summary</label>
+      <textarea id="inp_wall_text">After a gap-up start in Monday’s trade, Wall Street indices sustained 1%-plus gains through the close.
+
+The Positive Catalyst: Rate cut hopes by the Federal Reserve on backdrop of a slowing labor market.</textarea>
+      <label>Wall Street image URL</label>
+      <input id="inp_wall_img" type="text" value="https://5b9065186b.imgdist.com/pub/bfra/xx1rrbxw/svf/7xs/arz/wall%20street.jpg">
+
+      <label>STOCK MARKET NEWS — text (short bullets allowed)</label>
+      <textarea id="inp_stocknews_text">**TCS (+0.48%)** gained on reports that the firm is looking to roll out salary hikes for 80% of staff starting September 1.
+
+**Adani Power (+2.03%)** zoomed higher on receiving LoI for 2,400 MW thermal plant in Bihar's Bhagalpur.</textarea>
+      <label>Stock market news image URL</label>
+      <input id="inp_stocknews_img" type="text" value="https://iili.io/FsGbN9t.jpg">
+
+      <label>STOCKS IN SPOTLIGHT — text</label>
+      <textarea id="inp_spotlight_text">**TCS (+0.48%)** — gaining on salary hike hopes.
+
+**Jindal Stainless** — strong Q1; revenue improvement noted.</textarea>
+
+      <label>PREFERRED TRADES — text</label>
+      <textarea id="inp_trades_text">**Nifty (CMP 24596):** Buy on dips between 24450–24500. Stop at 23901. Targets 24857/25050.
+
+**Bank Nifty (CMP 55521):** Buy at CMP. Stop at 54601. Targets 56000/56600.</textarea>
+
+      <label>CHART OF THE DAY — intro text</label>
+      <textarea id="inp_chart_pre">**Bearish:** TVS MOTORS, M&M, and MARUTI on any early excessive intraday weakness with an interweek perspective.</textarea>
+      <label>Chart image URL</label>
+      <input id="inp_chart_img" type="text" value="https://iili.io/Fi1R96b.png">
+      <label>CHART — conclusion text</label>
+      <textarea id="inp_chart_post">Buy MARUTI at CMP. Stop at 12101. Targets 13087/13501. 200-DMA at 11982.</textarea>
+
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" id="btn_preview">Update Preview</button>
+        <button class="btn secondary" id="btn_download">Download HTML</button>
+        <button class="btn secondary" id="btn_copy">Copy HTML</button>
+      </div>
+
+      <div class="note">Preview HTML will be placed below. Exported HTML is Gmail-safe with inline styles and a 600px container for best compatibility.</div>
+    </div>
+
+    <div id="previewContainer">
+      <div class="previewPhone">
+        <div class="previewFrame" id="previewEmail"></div>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
+  <script>
+    // utilities
+    const logoFiles = document.getElementById('logoFiles');
+    const logoPreview = document.getElementById('logoPreview');
+    let logosData = []; // dataURLs
+    let headerColor = getComputedStyle(document.documentElement).getPropertyValue('--header-color') || 'rgb(170,3,101)';
+
+    logoFiles.addEventListener('change', async (e)=>{
+      logosData = [];
+      logoPreview.innerHTML = '';
+      const files = Array.from(e.target.files);
+      for (const f of files){
+        const data = await fileToDataURL(f);
+        logosData.push(data);
+        const img = document.createElement('img'); img.src = data; logoPreview.appendChild(img);
+      }
+      if (logosData.length){
+        const img = new Image(); img.crossOrigin='Anonymous'; img.src = logosData[0];
+        img.onload = function(){
+          try{
+            const ct = new ColorThief();
+            const col = ct.getColor(img); headerColor = `rgb(${col[0]}, ${col[1]}, ${col[2]})`;
+            alert('Header color set to ' + headerColor);
+            updatePreview();
+          }catch(err){console.warn('color-thief failed', err)}
+        }
+      }
+    });
+
+    function fileToDataURL(file){
+      return new Promise((res, rej)=>{
+        const r = new FileReader(); r.onload = ()=>res(r.result); r.onerror = rej; r.readAsDataURL(file);
+      });
+    }
+
+    // sanitize convert: replace **bold** with <b>bold</b> and double enter with <p>
+    function formatTextForEmail(raw){
+      if(!raw) return '';
+      // escape HTML special chars first
+      raw = raw.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      // bold: **text** => <b>text</b>
+      raw = raw.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
+      // paragraphs: split by two or more newlines
+      const parts = raw.split(/\n{2,}/g).map(p=>'<p style="margin:0 0 12px 0;line-height:1.4;font-size:16px;color:#1f2937">'+p.replace(/\n/g,'<br>')+'</p>');
+      return parts.join('\n');
+    }
+
+    function buildEmailHTML(){
+      // collect inputs
+      const morning = document.getElementById('inp_morningHeader').value;
+      const mainImg = document.getElementById('inp_main_img').value.trim();
+      const lead = formatTextForEmail(document.getElementById('inp_lead').value);
+      const globalImg = document.getElementById('inp_global_img').value.trim();
+      const globalText = formatTextForEmail(document.getElementById('inp_global_text').value);
+      const trendsImg = document.getElementById('inp_trends_img').value.trim();
+      const technicals = document.getElementById('inp_technical_imgs').value.split(',').map(s=>s.trim()).filter(Boolean);
+      const wallText = formatTextForEmail(document.getElementById('inp_wall_text').value);
+      const wallImg = document.getElementById('inp_wall_img').value.trim();
+      const stockText = formatTextForEmail(document.getElementById('inp_stocknews_text').value);
+      const stockImg = document.getElementById('inp_stocknews_img').value.trim();
+      const spotlight = formatTextForEmail(document.getElementById('inp_spotlight_text').value);
+      const trades = formatTextForEmail(document.getElementById('inp_trades_text').value);
+      const chartPre = formatTextForEmail(document.getElementById('inp_chart_pre').value);
+      const chartImg = document.getElementById('inp_chart_img').value.trim();
+      const chartPost = formatTextForEmail(document.getElementById('inp_chart_post').value);
+
+      // decide images fallback order
+      const firstLogo = logosData[0] || '';
+      const chosenMain = mainImg || firstLogo || technicals[0] || trendsImg || '';
+      const chosenGlobal = globalImg || trendsImg || technicals[0] || firstLogo || '';
+
+      // technicals html (up to 3)
+      let technicalsHtml = '';
+      if(technicals.length){
+        technicals.slice(0,3).forEach((url, idx)=>{
+          technicalsHtml += `<tr><td style="padding:10px 0"><img src="${url}" alt="chart${idx+1}" style="width:100%;height:auto;display:block;border:0"></td></tr>`;
+          if(idx<2) technicalsHtml += `<tr><td style="border-top:1px solid #eef2f6;margin:8px 0"></td></tr>`;
+        });
+      }
+
+      // logos html top
+      let logosHtml = '';
+      if(logosData.length){
+        logosHtml = '<tr><td style="text-align:center;padding-bottom:10px">';
+        logosData.forEach(d=>{ logosHtml += `<img src="${d}" alt="logo" style="width:140px;max-width:46%;height:auto;margin:6px;display:inline-block;border:0">`; });
+        logosHtml += '</td></tr>';
+      }
+
+      // build final gmail-safe email (table-based, inline styles, 600px width)
+      const email = `<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Email</title></head>
+<body style="margin:0;padding:0;background:#d0d0d0;font-family:Inter, Arial, Helvetica, sans-serif;">
+  <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
+    <tr><td align="center" style="padding:18px 10px;">
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="600" style="max-width:600px;background:#ffffff;border-radius:8px;overflow:hidden;">
+        <tbody>
+          ${logosHtml}
+
+          <tr><td style="background:${headerColor};color:#ffffff;text-align:center;padding:15px 12px;font-weight:700;font-size:18px;">${escapeHtml(morning)}</td></tr>
+
+          <tr><td style="padding:12px;">
+            <img src="${chosenMain}" alt="main" style="width:100%;height:auto;display:block;border:0;"> 
+          </td></tr>
+
+          <tr><td style="padding:12px;">${lead}</td></tr>
+
+          <tr><td style="background:${headerColor};color:#ffffff;text-align:center;padding:10px 12px;font-weight:700;font-size:16px;">7:00 AM GLOBAL UPDATE:</td></tr>
+          <tr><td style="padding:12px;text-align:center"><img src="${chosenGlobal}" alt="global" style="width:100%;height:auto;display:block;border:0"></td></tr>
+          <tr><td style="padding:12px;">${globalText}</td></tr>
+
+          <tr><td style="background:${headerColor};color:#ffffff;text-align:center;padding:12px 10px;font-weight:700;font-size:16px;">MARKET TRENDS:</td></tr>
+          <tr><td style="padding:12px;text-align:center"><img src="${trendsImg}" alt="trends" style="width:100%;height:auto;display:block;border:0"></td></tr>
+
+          <tr><td style="background:${headerColor};color:#ffffff;text-align:center;padding:12px 10px;font-weight:700;font-size:16px;">WHAT TECHNICALS TELLS US ON NIFTY BANK NIFTY & SENSEX:</td></tr>
+          ${technicalsHtml || '<tr><td style="padding:12px">No technical charts provided.</td></tr>'}
+
+          <tr><td style="background:${headerColor};color:#ffffff;text-align:center;padding:12px 10px;font-weight:700;font-size:16px;">WHAT HAPPENED AT WALL STREET IN OVERNIGHT TRADE:</td></tr>
+          <tr><td style="padding:12px;">${wallText}</td></tr>
+          <tr><td style="padding:12px;text-align:center"><img src="${wallImg}" alt="wall" style="width:100%;height:auto;display:block;border:0"></td></tr>
+
+          <tr><td style="background:${headerColor};color:#ffffff;text-align:center;padding:12px 10px;font-weight:700;font-size:16px;">STOCK MARKET NEWS:</td></tr>
+          <tr><td style="padding:12px;">${stockText}</td></tr>
+          <tr><td style="padding:12px;text-align:center"><img src="${stockImg}" alt="stocks" style="width:100%;height:auto;display:block;border:0"></td></tr>
+
+          <tr><td style="background:${headerColor};color:#ffffff;text-align:center;padding:12px 10px;font-weight:700;font-size:16px;">STOCKS IN SPOTLIGHT:</td></tr>
+          <tr><td style="padding:12px;">${spotlight}</td></tr>
+
+          <tr><td style="background:${headerColor};color:#ffffff;text-align:center;padding:12px 10px;font-weight:700;font-size:16px;">PREFERRED TRADES:</td></tr>
+          <tr><td style="padding:12px;">${trades}</td></tr>
+
+          <tr><td style="background:${headerColor};color:#ffffff;text-align:center;padding:12px 10px;font-weight:700;font-size:16px;">CHART OF THE DAY:</td></tr>
+          <tr><td style="padding:12px;">${chartPre}</td></tr>
+          <tr><td style="padding:12px;text-align:center"><img src="${chartImg}" alt="chart" style="width:100%;height:auto;display:block;border:0"></td></tr>
+          <tr><td style="padding:12px;">${chartPost}</td></tr>
+
+          <tr><td style="padding:12px;font-size:13px;color:#475569;line-height:1.4;text-align:center"> <strong>Disclaimer/ Disclosure:</strong>
+            <div style="margin-top:6px;text-align:left">The investments &amp; trading ideas recommended in the market analysis, research reports, etc. may not be suitable for all investors. This article or data points does not construe investment advice as stock market investments are subject to market risks so please refer to your financial consultant advice before Investing or trading. All information is a point of view, and is for educational, learning and informational use only.</div>
+          </td></tr>
+
+          <tr><td style="background:${headerColor};color:#ffffff;text-align:center;padding:12px;font-size:13px"><strong>© 2025 | All rights reserved.</strong></td></tr>
+
+        </tbody>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+      return email;
+    }
+
+    function updatePreview(){
+      const html = buildEmailHTML();
+      // set preview frame (use innerHTML)
+      const frame = document.getElementById('previewEmail');
+      frame.innerHTML = html;
+      // set download data
+      window.generatedEmailHtml = html;
+    }
+
+    // helpers
+    function escapeHtml(text){ return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    document.getElementById('btn_preview').addEventListener('click', updatePreview);
+
+    document.getElementById('btn_download').addEventListener('click', ()=>{
+      const html = window.generatedEmailHtml || buildEmailHTML();
+      const blob = new Blob([html], {type:'text/html'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'email_lotus_gmail_safe.html'; a.click();
+    });
+
+    document.getElementById('btn_copy').addEventListener('click', async ()=>{
+      const html = window.generatedEmailHtml || buildEmailHTML();
+      try{ await navigator.clipboard.writeText(html); alert('HTML copied to clipboard'); }catch(e){ alert('Copy failed — please use Download'); }
+    });
+
+    // initial preview on load
+    window.addEventListener('load', ()=>{ updatePreview(); });
+  </script>
+</body>
+</html>
