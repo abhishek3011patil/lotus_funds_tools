@@ -58,7 +58,7 @@
       <div class="card">
         <h2>1) Upload one or more logos</h2>
         <input id="logoInput" type="file" accept="image/*" multiple />
-        <div class="muted" style="margin-top:8px">Tip: name files like <span class="kbd">www.abccompany.com.png</span> to auto-set footer link.</div>
+        <div class="muted" style="margin-top:8px">Tip: name files like <span class="kbd">www.abccompany.com_FF6600.png</span> to auto-set footer link.</div>
         <div class="thumbs" id="thumbs"></div>
         <h2 style="margin-top:16px">(Optional) Logo URLs — one per line</h2>
         <textarea id="logoUrls" placeholder="https://example.com/path/logo.png\nhttps://...\n"></textarea>
@@ -87,7 +87,6 @@
   const DEFAULT_THEME = '#0056a3';
   const statusEl = document.getElementById('status');
   const previewEl = document.getElementById('reportPreview');
-  const thumbsEl = document.getElementById('thumbs');
   const logoInput = document.getElementById('logoInput');
   const logoUrls = document.getElementById('logoUrls');
   const sandbox = document.getElementById('renderSandbox');
@@ -100,9 +99,6 @@
     '<p style="padding:16px">No report found in localStorage. Go back and press "Submit & Continue".</p>';
   previewEl.innerHTML = baseReportHTML;
 
-  function updatePreviewWidth(){ previewEl.style.width = '900px'; }
-  updatePreviewWidth();
-
   const sleep = ms => new Promise(r=>setTimeout(r,ms));
 
   async function fileToDataURL(file){
@@ -114,12 +110,14 @@
     });
   }
 
-  async function dataURLToImage(dataURL){
+  async function urlToDataURL(url){
+    const res = await fetch(url);
+    const blob = await res.blob();
     return new Promise((resolve,reject)=>{
-      const img = new Image();
-      img.onload = ()=>resolve(img);
-      img.onerror = reject;
-      img.src = dataURL;
+      const fr = new FileReader();
+      fr.onload = ()=>resolve(fr.result);
+      fr.onerror = reject;
+      fr.readAsDataURL(blob);
     });
   }
 
@@ -133,27 +131,24 @@
     }));
   }
 
-  function rgbToHex([r,g,b]){ const h=v=>v.toString(16).padStart(2,"0"); return `#${h(r)}${h(g)}${h(b)}`; }
-  function isTooDark([r,g,b]){ return (0.2126*r + 0.7152*g + 0.0722*b) < 40; }
-  function isLowSaturation([r,g,b]){ const max=Math.max(r,g,b),min=Math.min(r,g,b); return max>0 && (max-min)/max <0.15; }
+  function extractWebsiteAndColor(nameOrUrl){
+    // strip extension if it's a filename
+    let base = nameOrUrl.split('/').pop(); // last part of path or filename
+    base = base.replace(/\.[a-z]{2,4}$/i,''); // remove .png, .jpg etc.
 
-  function pickDominantColorFromImage(img){
-    try{
-      const ct = new ColorThief();
-      const palette = ct.getPalette(img,8) || [];
-      for(const rgb of palette){ if(!isTooDark(rgb) && !isLowSaturation(rgb)) return rgbToHex(rgb); }
-      for(const rgb of palette){ if(!isTooDark(rgb)) return rgbToHex(rgb); }
-    }catch(e){ console.warn("ColorThief failed", e); }
-    return DEFAULT_THEME;
-  }
-
-  function extractWebsiteFromName(name){
-    const lower = name.toLowerCase();
-    const m1 = lower.match(/(www\.[a-z0-9\-\.]+\.[a-z]{2,})/i);
-    if(m1) return m1[1];
-    const m2 = lower.match(/([a-z0-9\-\.]+\.[a-z]{2,})/i);
-    if(m2) return m2[1];
-    return "www.example.com";
+    // match www.domain.com_COLOR
+    const m = base.match(/(www\.[a-z0-9\.\-]+\.[a-z]{2,})(?:[_\-]([0-9a-fA-F]{6}))/i);
+    if(m){
+      return {
+        website: m[1],
+        color: "#" + m[2].toUpperCase()
+      };
+    }
+    const m2 = base.match(/(www\.[a-z0-9\.\-]+\.[a-z]{2,})/i);
+    return {
+      website: m2 ? m2[1] : "www.example.com",
+      color: DEFAULT_THEME
+    };
   }
 
   function serializeDoc(dom){ return "<!DOCTYPE html>"+dom.documentElement.outerHTML; }
@@ -169,26 +164,28 @@
       header.height = 60;
       header.style.objectFit="contain";
     }
-
     let htmlStr = doc.documentElement.outerHTML;
     htmlStr = htmlStr.replace(/#0056a3/gi, themeHex);
     htmlStr = htmlStr.replace(/--theme\s*:\s*#[0-9a-f]{6}/gi, `--theme:${themeHex}`);
-    const footerMatch = htmlStr.match(/<footer[\s\S]*?<\/footer>/i);
-    if(footerMatch){
-      let block = footerMatch[0];
-      block = /www\.[^\s<]+/i.test(block) ? 
-        block.replace(/www\.[^\s<]+/i, website) :
-        block.replace(/<p[^>]*>(.*?)<\/p>/i, m=>m.replace(/>(.*?)</, `><strong>${website} |</strong> $1<`));
-      htmlStr = htmlStr.replace(footerMatch[0], block);
-    }
     return serializeDoc(parser.parseFromString(htmlStr,"text/html"));
   }
 
   async function collectLogos(){
     const items=[];
+    // local file uploads
     for(const file of (logoInput.files||[])){
       const dataURL=await fileToDataURL(file);
       items.push({label:file.name,dataURL});
+    }
+    // remote URLs
+    const urls = logoUrls.value.split(/\n/).map(s=>s.trim()).filter(Boolean);
+    for(const url of urls){
+      try{
+        const dataURL = await urlToDataURL(url);
+        items.push({label:url,dataURL});
+      }catch(e){
+        console.warn("Failed to load URL", url, e);
+      }
     }
     return items;
   }
@@ -198,31 +195,24 @@
     const wrapper = document.createElement("div");
     wrapper.innerHTML = htmlString;
     sandbox.appendChild(wrapper);
-
     let node = wrapper.querySelector("#report") || wrapper;
     node.style.width="900px"; 
     node.style.background="#fff";
     node.style.padding = "25px";  
-
-    // Force logo resizing inside sandbox
     const logoImg = node.querySelector("header img") || node.querySelector(".logo img");
     if(logoImg){
-       logoImg.style.width = "360px";       // smaller width
-      logoImg.style.height = "auto";       // maintain aspect ratio
-     logoImg.style.maxHeight = "180px";    // constrain height
-    logoImg.style.objectFit = "contain";
+      logoImg.style.width = "360px";       
+      logoImg.style.height = "auto";       
+      logoImg.style.maxHeight = "180px";   
+      logoImg.style.objectFit = "contain";
     }
-
     await waitForImages(node);
     await sleep(200); 
-
     const dataUrl = await htmlToImage.toPng(node,{pixelRatio:2,backgroundColor:"#fff",cacheBust:true});
     return (await fetch(dataUrl)).blob();
   }
 
   function updateStatus(msg){ statusEl.textContent=msg; }
-
-  logoInput.addEventListener("change", collectLogos);
 
   generateBtn.addEventListener("click", async ()=>{
     generateBtn.disabled=true;
@@ -237,16 +227,10 @@
       for(let i=0;i<logos.length;i++){
         const item = logos[i];
         updateStatus(`Processing ${i+1}/${logos.length} — ${item.label}`);
-
-        const img = await dataURLToImage(item.dataURL);
-        let themeHex = pickDominantColorFromImage(img);
-        if(/^#0+$/.test(themeHex)) themeHex = DEFAULT_THEME;
-
-        const website = extractWebsiteFromName(item.label);
-        const htmlOut = applyThemeAndBrand({html: baseReportHTML, logoDataURL:item.dataURL, themeHex, website});
+        const {website, color} = extractWebsiteAndColor(item.label);
+        const htmlOut = applyThemeAndBrand({html: baseReportHTML, logoDataURL:item.dataURL, themeHex:color, website});
         const safeBase = website.replace(/[^a-z0-9\-\.]/gi,'_');
         const pngBlob = await renderPNGFromHTML(htmlOut);
-
         folder.file(`${safeBase}.html`, htmlOut);
         folder.file(`${safeBase}.png`, pngBlob);
       }
@@ -260,5 +244,7 @@
   });
 })();
 </script>
+
+
 </body>
 </html>
