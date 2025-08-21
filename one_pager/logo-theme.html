@@ -22,7 +22,7 @@
     input[type="file"]{display:block;width:100%}
     textarea{width:100%;min-height:90px;border:1px solid #e2e2e2;border-radius:10px;padding:10px;font-family:inherit}
     #reportPreviewWrap{overflow:auto;border:1px dashed #ddd;border-radius:14px;background:#fff}
-    #reportPreview{margin:0 auto;padding:0;background:#fff}
+    #reportPreview{margin:0 auto;padding:25px;background:#fff}
     .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
     .thumbs .thumb{border:1px solid #eee;border-radius:10px;overflow:hidden;width:84px;height:84px;display:flex;align-items:center;justify-content:center;background:#fafafa}
     .status{font-size:.9rem;white-space:pre-line}
@@ -202,13 +202,15 @@
     let node = wrapper.querySelector("#report") || wrapper;
     node.style.width="900px"; 
     node.style.background="#fff";
+    node.style.padding = "25px";  
 
     // Force logo resizing inside sandbox
     const logoImg = node.querySelector("header img") || node.querySelector(".logo img");
     if(logoImg){
-      logoImg.width = 180;
-      logoImg.height = 60;
-      logoImg.style.objectFit="contain";
+       logoImg.style.width = "360px";       // smaller width
+      logoImg.style.height = "auto";       // maintain aspect ratio
+     logoImg.style.maxHeight = "180px";    // constrain height
+    logoImg.style.objectFit = "contain";
     }
 
     await waitForImages(node);
