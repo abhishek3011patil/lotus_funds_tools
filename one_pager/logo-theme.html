@@ -63,7 +63,12 @@
         <h2 style="margin-top:16px">(Optional) Logo URLs — one per line</h2>
         <textarea id="logoUrls" placeholder="https://example.com/path/logo.png\nhttps://...\n"></textarea>
         <div class="muted">Remote images must allow CORS to extract colors reliably.</div>
+<div class="thumbs" id="thumbs"></div>
+<div id="colorPickerWrap" style="margin-top:10px"></div>
+
       </div>
+
+      
 
       <div class="card">
         <h2>2) Report preview (from Builder)</h2>
@@ -92,6 +97,9 @@
   const sandbox = document.getElementById('renderSandbox');
   const backBtn = document.getElementById('backBtn');
   const generateBtn = document.getElementById('generateBtn');
+  const thumbs = document.getElementById('thumbs');
+  let logoStates = []; // {file, dataURL, color, label}
+  let selectedLogoIdx = 0;
 
   backBtn.addEventListener('click',()=> history.back());
 
@@ -121,22 +129,9 @@
     });
   }
 
-  async function waitForImages(node){
-    const imgs = node.querySelectorAll("img");
-    await Promise.all([...imgs].map(img=>{
-      if(img.complete) return;
-      return new Promise(res=>{
-        img.onload=res; img.onerror=res;
-      });
-    }));
-  }
-
   function extractWebsiteAndColor(nameOrUrl){
-    // strip extension if it's a filename
-    let base = nameOrUrl.split('/').pop(); // last part of path or filename
-    base = base.replace(/\.[a-z]{2,4}$/i,''); // remove .png, .jpg etc.
-
-    // match www.domain.com_COLOR
+    let base = nameOrUrl.split('/').pop();
+    base = base.replace(/\.[a-z]{2,4}$/i,'');
     const m = base.match(/(www\.[a-z0-9\.\-]+\.[a-z]{2,})(?:[_\-]([0-9a-fA-F]{6}))/i);
     if(m){
       return {
@@ -170,19 +165,101 @@
     return serializeDoc(parser.parseFromString(htmlStr,"text/html"));
   }
 
+  async function waitForImages(node){
+    const imgs = node.querySelectorAll("img");
+    await Promise.all([...imgs].map(img=>{
+      if(img.complete) return;
+      return new Promise(res=>{
+        img.onload=res; img.onerror=res;
+      });
+    }));
+  }
+
+  async function renderPreview(idx) {
+    if (logoStates.length === 0) {
+      previewEl.innerHTML = baseReportHTML;
+      return;
+    }
+    const logo = logoStates[idx];
+    const {website} = extractWebsiteAndColor(logo.label);
+    const htmlOut = applyThemeAndBrand({
+      html: baseReportHTML,
+      logoDataURL: logo.dataURL,
+      themeHex: logo.color,
+      website
+    });
+    previewEl.innerHTML = htmlOut;
+  }
+
+  async function handleLogoInput() {
+    logoStates = [];
+    thumbs.innerHTML = '';
+    const files = Array.from(logoInput.files);
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const dataURL = await fileToDataURL(file);
+      const { color } = extractWebsiteAndColor(file.name);
+      logoStates.push({
+        file,
+        dataURL,
+        color,
+        label: file.name
+      });
+    }
+    renderThumbs();
+    selectedLogoIdx = 0;
+    renderPreview(selectedLogoIdx);
+  }
+
+  function renderThumbs() {
+    thumbs.innerHTML = '';
+    logoStates.forEach((logo, idx) => {
+      const thumbDiv = document.createElement('div');
+      thumbDiv.className = 'thumb';
+      thumbDiv.style.position = 'relative';
+      thumbDiv.style.border = idx === selectedLogoIdx ? '2px solid var(--theme)' : '1px solid #eee';
+      thumbDiv.style.cursor = 'pointer';
+      thumbDiv.innerHTML = `
+        <img src="${logo.dataURL}" style="max-width:80px;max-height:80px;">
+        <input type="color" value="${logo.color}" style="position:absolute;bottom:6px;left:6px;width:28px;height:28px;border-radius:6px;border:1px solid #ccc;box-shadow:0 1px 4px #0001;">
+      `;
+      // Select logo on click
+      thumbDiv.addEventListener('click', () => {
+        selectedLogoIdx = idx;
+        renderThumbs();
+        renderPreview(selectedLogoIdx);
+      });
+      // Color picker change
+      const colorInput = thumbDiv.querySelector('input[type="color"]');
+      colorInput.addEventListener('input', (e) => {
+        logoStates[idx].color = e.target.value;
+        if (selectedLogoIdx === idx) {
+          renderPreview(selectedLogoIdx);
+        }
+      });
+      thumbs.appendChild(thumbDiv);
+    });
+  }
+
+  logoInput.addEventListener('change', handleLogoInput);
+
   async function collectLogos(){
     const items=[];
-    // local file uploads
-    for(const file of (logoInput.files||[])){
-      const dataURL=await fileToDataURL(file);
-      items.push({label:file.name,dataURL});
+    // Local uploads
+    for(let i=0;i<logoStates.length;i++){
+      items.push({
+        label: logoStates[i].label,
+        dataURL: logoStates[i].dataURL,
+        customColor: logoStates[i].color
+      });
     }
-    // remote URLs
+    // Remote URLs
     const urls = logoUrls.value.split(/\n/).map(s=>s.trim()).filter(Boolean);
     for(const url of urls){
       try{
         const dataURL = await urlToDataURL(url);
-        items.push({label:url,dataURL});
+        const { color } = extractWebsiteAndColor(url);
+        items.push({label:url,dataURL,customColor:color});
       }catch(e){
         console.warn("Failed to load URL", url, e);
       }
@@ -228,7 +305,8 @@
         const item = logos[i];
         updateStatus(`Processing ${i+1}/${logos.length} — ${item.label}`);
         const {website, color} = extractWebsiteAndColor(item.label);
-        const htmlOut = applyThemeAndBrand({html: baseReportHTML, logoDataURL:item.dataURL, themeHex:color, website});
+        const themeColor = item.customColor || color;
+        const htmlOut = applyThemeAndBrand({html: baseReportHTML, logoDataURL:item.dataURL, themeHex:themeColor, website});
         const safeBase = website.replace(/[^a-z0-9\-\.]/gi,'_');
         const pngBlob = await renderPNGFromHTML(htmlOut);
         folder.file(`${safeBase}.html`, htmlOut);
@@ -242,6 +320,7 @@
     }catch(e){ console.error(e); updateStatus("Error: "+e.message); }
     finally{ generateBtn.disabled=false; }
   });
+
 })();
 </script>
 
