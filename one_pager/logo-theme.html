@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -22,7 +21,7 @@
     .stack{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     input[type="file"]{display:block;width:100%}
     textarea{width:100%;min-height:90px;border:1px solid #e2e2e2;border-radius:10px;padding:10px;font-family:inherit}
-    #reportPreviewWrap{overflow:auto;border:1px dashed #ddd;border-radius:14px;background:#fff}
+    #reportPreviewWrap{overflow:auto;border:1px dashed #ddd;border-radius:14px;background:#fff;position:relative}
     #reportPreview{margin:0 auto;padding:25px;background:#fff}
     .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
     .thumbs .thumb{border:1px solid #eee;border-radius:10px;overflow:hidden;width:84px;height:84px;display:flex;align-items:center;justify-content:center;background:#fafafa}
@@ -42,6 +41,34 @@
     .positive { color: #00C853 !important; font-weight:600 !important; }
     .negative { color: #D50000 !important; font-weight:600 !important; }
     .neutral  { color: #757575 !important; font-weight:600 !important; }
+
+    /* Visual hint that the preview is read-only */
+    #reportPreview.readonly { position:relative; }
+    #reportPreview.readonly::after{
+      content: "Preview — read only";
+      position:absolute;
+      right:10px;
+      top:10px;
+      background:#fff;
+      color:#666;
+      border:1px solid #eee;
+      padding:4px 8px;
+      border-radius:8px;
+      font-size:.8rem;
+      pointer-events:none;
+      opacity:.95;
+    }
+
+    /* Overlay that blocks interactions but forwards scroll/touch/keyboard to the preview wrap */
+    .preview-overlay{
+      position:absolute;
+      inset:0;
+      z-index:6;
+      background:transparent;
+      cursor:default;
+      border-radius:12px;
+      /* keep visible for screen readers as decorative */
+    }
   </style>
   <!-- External libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js" defer></script>
@@ -49,7 +76,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 </head>
 <body>
   <header class="app">
@@ -76,13 +103,13 @@
 
       </div>
 
-      
-
       <div class="card">
         <h2>2) Report preview (from Builder)</h2>
         <div class="muted">Loaded from <span class="kbd">localStorage.reportHTML</span>. This is the base used for each logo.</div>
         <div id="reportPreviewWrap">
-          <div id="reportPreview"></div>
+          <div id="reportPreview" class="readonly" aria-readonly="true"></div>
+          <!-- overlay blocks interactions but forwards scroll/touch/keyboard to the wrap -->
+          <div id="previewOverlay" class="preview-overlay" aria-hidden="true" title="Read-only preview"></div>
         </div>
       </div>
     </div>
@@ -100,6 +127,8 @@
   const DEFAULT_THEME = '#0056a3';
   const statusEl = document.getElementById('status');
   const previewEl = document.getElementById('reportPreview');
+  const previewWrap = document.getElementById('reportPreviewWrap');
+  const overlayEl = document.getElementById('previewOverlay');
   const logoInput = document.getElementById('logoInput');
   const logoUrls = document.getElementById('logoUrls');
   const sandbox = document.getElementById('renderSandbox');
@@ -227,9 +256,104 @@
     }));
   }
 
+  // disable editing inside a DOM node (used for the preview)
+  function disableEditingInNode(node){
+    if(!node) return;
+    try{
+      // force root/contenteditable off
+      node.setAttribute('contenteditable','false');
+      // Make contenteditable elements non-editable (including descendants)
+      node.querySelectorAll('[contenteditable]').forEach(el=>{
+        el.setAttribute('contenteditable','false');
+      });
+      // Disable form controls so they can't be edited/interacted with
+      node.querySelectorAll('input, textarea, select, button').forEach(el=>{
+        if(!el.hasAttribute('data-preview-disabled')){
+          if(el.disabled) el.setAttribute('data-preview-disabled','true');
+          else el.setAttribute('data-preview-disabled','false');
+        }
+        el.disabled = true;
+        el.tabIndex = -1;
+      });
+      // remove tabindex from any element that could receive focus
+      node.querySelectorAll('[tabindex]').forEach(el=>{
+        el.setAttribute('data-prev-tabindex', el.getAttribute('tabindex'));
+        el.tabIndex = -1;
+      });
+      // Remove spellcheck and inline event attributes
+      node.querySelectorAll('[spellcheck]').forEach(el=>el.spellcheck = false);
+      node.querySelectorAll('*').forEach(el=>{
+        if(el.hasAttribute('oninput')) el.removeAttribute('oninput');
+        if(el.hasAttribute('onchange')) el.removeAttribute('onchange');
+        if(el.hasAttribute('onclick')) el.removeAttribute('onclick');
+      });
+      // Stop propagation of key events on node (prevent editing via keyboard)
+      const stopKeys = e => {
+        const blocked = ['Backspace','Delete','Enter'];
+        if(blocked.includes(e.key) || (e.ctrlKey || e.metaKey) && ['x','v','c','a','z'].includes(e.key.toLowerCase())) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      };
+      node.addEventListener('keydown', stopKeys, {capture:true});
+      node.addEventListener('keypress', stopKeys, {capture:true});
+      node.addEventListener('keyup', stopKeys, {capture:true});
+    }catch(e){
+      console.warn('disableEditingInNode failed', e);
+    }
+  }
+
+  // setup the overlay so interactions are blocked but scrolling works
+  (function setupOverlay(){
+    // make sure previewWrap is positioned (CSS already sets it, but ensure)
+    previewWrap.style.position = previewWrap.style.position || 'relative';
+    overlayEl.tabIndex = 0; // allow keyboard handling
+    let touchStartY = 0;
+    overlayEl.addEventListener('wheel', (e)=>{
+      // forward wheel scrolling to the wrap
+      previewWrap.scrollTop += e.deltaY;
+      e.preventDefault();
+    }, {passive:false});
+    overlayEl.addEventListener('touchstart', (e)=>{
+      touchStartY = e.touches[0]?.clientY || 0;
+    }, {passive:true});
+    overlayEl.addEventListener('touchmove', (e)=>{
+      const y = e.touches[0]?.clientY || 0;
+      const dy = touchStartY - y;
+      previewWrap.scrollTop += dy;
+      touchStartY = y;
+      e.preventDefault();
+    }, {passive:false});
+    overlayEl.addEventListener('keydown', (e)=>{
+      // forward common navigation keys
+      const line = 40;
+      const page = previewWrap.clientHeight - 40;
+      switch(e.key){
+        case 'ArrowDown': previewWrap.scrollTop += line; e.preventDefault(); break;
+        case 'ArrowUp': previewWrap.scrollTop -= line; e.preventDefault(); break;
+        case 'PageDown': previewWrap.scrollTop += page; e.preventDefault(); break;
+        case 'PageUp': previewWrap.scrollTop -= page; e.preventDefault(); break;
+        case ' ':
+          previewWrap.scrollTop += page; e.preventDefault(); break;
+        case 'Home': previewWrap.scrollTop = 0; e.preventDefault(); break;
+        case 'End': previewWrap.scrollTop = previewWrap.scrollHeight; e.preventDefault(); break;
+        default:
+          // block editing-related combos
+          if((e.ctrlKey||e.metaKey) && ['x','v','c','a','z'].includes(e.key.toLowerCase())){
+            e.preventDefault();
+          }
+      }
+    });
+    // prevent focus from reaching elements inside preview (keep focus on overlay)
+    overlayEl.addEventListener('focus', ()=>{ /* noop */ });
+  })();
+
   async function renderPreview(idx) {
     if (logoStates.length === 0) {
       previewEl.innerHTML = baseReportHTML;
+      disableEditingInNode(previewEl);
+      // ensure overlay present
+      overlayEl.style.display = 'block';
       return;
     }
     const logo = logoStates[idx];
@@ -241,6 +365,14 @@
       website
     });
     previewEl.innerHTML = htmlOut;
+    // ensure preview is read-only: remove contenteditable, disable form controls, remove event handlers
+    previewEl.classList.add('readonly');
+    previewEl.setAttribute('aria-readonly','true');
+    disableEditingInNode(previewEl);
+    // keep overlay visible to block interactions; it will forward scroll/keyboard to the wrap
+    overlayEl.style.display = 'block';
+    // ensure overlay is focused so keyboard shortcuts scroll the preview rather than editing anything
+    try{ overlayEl.focus({preventScroll:true}); }catch(e){}
   }
 
   async function handleLogoInput() {
@@ -335,11 +467,13 @@
       logoImg.style.maxHeight = "180px";   
       logoImg.style.objectFit = "contain";
     }
+    // Ensure render sandbox content is non-editable too (so contenteditable/form fields don't influence rendering)
+    disableEditingInNode(node);
     await waitForImages(node);
     await sleep(200); 
-const dataUrl = await htmlToImage.toPng(node,{pixelRatio:2,backgroundColor:"#fff",cacheBust:true});
-   const pngBlob = await (await fetch(dataUrl)).blob();
-   return { pngBlob, dataUrl };
+    const dataUrl = await htmlToImage.toPng(node,{pixelRatio:2,backgroundColor:"#fff",cacheBust:true});
+    const pngBlob = await (await fetch(dataUrl)).blob();
+    return { pngBlob, dataUrl };
   }
 
   function updateStatus(msg){ statusEl.textContent=msg; }
@@ -361,27 +495,27 @@ const dataUrl = await htmlToImage.toPng(node,{pixelRatio:2,backgroundColor:"#fff
         const themeColor = item.customColor || color;
         const htmlOut = applyThemeAndBrand({html: baseReportHTML, logoDataURL:item.dataURL, themeHex:themeColor, website});
         const safeBase = website.replace(/[^a-z0-9\-\.]/gi,'_');
-            const { pngBlob, dataUrl } = await renderPNGFromHTML(htmlOut);
-     folder.file(`${safeBase}.html`, htmlOut);
-      folder.file(`${safeBase}.png`, pngBlob);
+        const { pngBlob, dataUrl } = await renderPNGFromHTML(htmlOut);
+        folder.file(`${safeBase}.html`, htmlOut);
+        folder.file(`${safeBase}.png`, pngBlob);
 
-
-         try{
-        updateStatus(`Rendering PDF for ${safeBase}...`);
-        const img = new Image();
-        img.src = dataUrl;
-         await new Promise(res=>{ img.onload = res; img.onerror = res; });
-        const { jsPDF } = window.jspdf || {};
-       if(jsPDF){
-          const doc = new jsPDF({ unit: 'px', format: [img.width, img.height] });           doc.addImage(dataUrl, 'PNG', 0, 0, img.width, img.height);
-         const pdfBlob = doc.output('blob');
-        folder.file(`${safeBase}.pdf`, pdfBlob);
-        } else {
-           console.warn("jsPDF not available; skipping PDF generation for", safeBase);
+        try{
+          updateStatus(`Rendering PDF for ${safeBase}...`);
+          const img = new Image();
+          img.src = dataUrl;
+          await new Promise(res=>{ img.onload = res; img.onerror = res; });
+          const { jsPDF } = window.jspdf || {};
+          if(jsPDF){
+            const doc = new jsPDF({ unit: 'px', format: [img.width, img.height] });
+            doc.addImage(dataUrl, 'PNG', 0, 0, img.width, img.height);
+            const pdfBlob = doc.output('blob');
+            folder.file(`${safeBase}.pdf`, pdfBlob);
+          } else {
+            console.warn("jsPDF not available; skipping PDF generation for", safeBase);
+          }
+        }catch(e){
+          console.warn("PDF generation failed for", safeBase, e);
         }
-       }catch(e){
-        console.warn("PDF generation failed for", safeBase, e);
-     }
       }
 
       updateStatus("Bundling ZIP...");
@@ -389,8 +523,14 @@ const dataUrl = await htmlToImage.toPng(node,{pixelRatio:2,backgroundColor:"#fff
       saveAs(zipBlob, `MorningReport_${new Date().toISOString().slice(0,10)}.zip`);
       updateStatus("Done!");
     }catch(e){ console.error(e); updateStatus("Error: "+e.message); }
-    finally{ generateBtn.disabled=false; } 
+    finally{ generateBtn.disabled=false; }
   });
+
+  // initialize: make overlay active and disable any editing in the initial preview
+  disableEditingInNode(previewEl);
+  overlayEl.style.display = 'block';
 
 })();
 </script>
+</body>
+</html>
