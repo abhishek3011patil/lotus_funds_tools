@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -36,12 +37,19 @@
       height: 60px !important;
       object-fit: contain;
     }
+
+    /* Trend/bias color classes for preview/export */
+    .positive { color: #00C853 !important; font-weight:600 !important; }
+    .negative { color: #D50000 !important; font-weight:600 !important; }
+    .neutral  { color: #757575 !important; font-weight:600 !important; }
   </style>
   <!-- External libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 </head>
 <body>
   <header class="app">
@@ -148,6 +156,39 @@
 
   function serializeDoc(dom){ return "<!DOCTYPE html>"+dom.documentElement.outerHTML; }
 
+  // apply trend/bias coloring to tables inside the document
+  function applyTrendColors(doc){
+    try{
+      const tables = Array.from(doc.querySelectorAll('table'));
+      tables.forEach(table=>{
+        // find header row (first tr that has th)
+        const headerRow = Array.from(table.rows).find(r=> r.querySelectorAll('th').length > 0);
+        if(!headerRow) return;
+        const headers = Array.from(headerRow.querySelectorAll('th')).map(h=>h.textContent.trim().toLowerCase());
+        const targetIndex = headers.findIndex(h => h === 'trend' || h === 'bias');
+        if(targetIndex === -1) return;
+        // apply classes to cells in that column (skip header row)
+        Array.from(table.rows).forEach((row, rIdx)=>{
+          if(row === headerRow) return;
+          const cells = Array.from(row.querySelectorAll('td,th'));
+          if(!cells || !cells.length) return;
+          const cell = cells[targetIndex];
+          if(!cell) return;
+          const txt = (cell.textContent || '').trim().toLowerCase();
+          const isNeutral = /\bneutral\b/.test(txt);
+          const isPositive = /\bpositive\b/.test(txt);
+          const isNegative = /\bnegative\b/.test(txt);
+          cell.classList.remove('positive','negative','neutral');
+          if(isNeutral) cell.classList.add('neutral');
+          else if(isPositive) cell.classList.add('positive');
+          else if(isNegative) cell.classList.add('negative');
+        });
+      });
+    }catch(e){
+      console.warn('applyTrendColors failed', e);
+    }
+  }
+
   function applyThemeAndBrand({html, logoDataURL, themeHex, website}){
     const parser = new DOMParser();
     const doc = parser.parseFromString(html,"text/html");
@@ -159,6 +200,17 @@
       header.height = 60;
       header.style.objectFit="contain";
     }
+
+    // ensure trend/bias styles are present in the doc head
+    try{
+      const style = doc.createElement('style');
+      style.textContent = `.positive{color:#00C853 !important;font-weight:600 !important}.negative{color:#D50000 !important;font-weight:600 !important}.neutral{color:#757575 !important;font-weight:600 !important}`;
+      doc.head.appendChild(style);
+    }catch(e){ /* ignore */ }
+
+    // apply trend/bias coloring based on table headers and cell content
+    applyTrendColors(doc);
+
     let htmlStr = doc.documentElement.outerHTML;
     htmlStr = htmlStr.replace(/#0056a3/gi, themeHex);
     htmlStr = htmlStr.replace(/--theme\s*:\s*#[0-9a-f]{6}/gi, `--theme:${themeHex}`);
@@ -285,8 +337,9 @@
     }
     await waitForImages(node);
     await sleep(200); 
-    const dataUrl = await htmlToImage.toPng(node,{pixelRatio:2,backgroundColor:"#fff",cacheBust:true});
-    return (await fetch(dataUrl)).blob();
+const dataUrl = await htmlToImage.toPng(node,{pixelRatio:2,backgroundColor:"#fff",cacheBust:true});
+   const pngBlob = await (await fetch(dataUrl)).blob();
+   return { pngBlob, dataUrl };
   }
 
   function updateStatus(msg){ statusEl.textContent=msg; }
@@ -308,9 +361,27 @@
         const themeColor = item.customColor || color;
         const htmlOut = applyThemeAndBrand({html: baseReportHTML, logoDataURL:item.dataURL, themeHex:themeColor, website});
         const safeBase = website.replace(/[^a-z0-9\-\.]/gi,'_');
-        const pngBlob = await renderPNGFromHTML(htmlOut);
-        folder.file(`${safeBase}.html`, htmlOut);
-        folder.file(`${safeBase}.png`, pngBlob);
+            const { pngBlob, dataUrl } = await renderPNGFromHTML(htmlOut);
+     folder.file(`${safeBase}.html`, htmlOut);
+      folder.file(`${safeBase}.png`, pngBlob);
+
+
+         try{
+        updateStatus(`Rendering PDF for ${safeBase}...`);
+        const img = new Image();
+        img.src = dataUrl;
+         await new Promise(res=>{ img.onload = res; img.onerror = res; });
+        const { jsPDF } = window.jspdf || {};
+       if(jsPDF){
+          const doc = new jsPDF({ unit: 'px', format: [img.width, img.height] });           doc.addImage(dataUrl, 'PNG', 0, 0, img.width, img.height);
+         const pdfBlob = doc.output('blob');
+        folder.file(`${safeBase}.pdf`, pdfBlob);
+        } else {
+           console.warn("jsPDF not available; skipping PDF generation for", safeBase);
+        }
+       }catch(e){
+        console.warn("PDF generation failed for", safeBase, e);
+     }
       }
 
       updateStatus("Bundling ZIP...");
@@ -323,7 +394,3 @@
 
 })();
 </script>
-
-
-</body>
-</html>

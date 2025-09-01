@@ -98,12 +98,16 @@ li::marker {
     color: #fff;
     font-weight: 600;
   }
-  .positive {
+   .positive {
     color: #00C853;
     font-weight: 600;
   }
   .negative {
     color: #D50000;
+    font-weight: 600;
+  }
+  .neutral {
+    color: #757575; /* gray */
     font-weight: 600;
   }
   .highlight {
@@ -112,11 +116,6 @@ li::marker {
     padding: 10px;
     border-radius: 6px;
     margin-bottom: 20px;
-  }
-  .small-note {
-    font-size: 0.85rem;
-    color: #666;
-    margin-top: 10px;
   }
   footer {
     margin-top: 20px;
@@ -128,6 +127,9 @@ li::marker {
     color: #0056a3;
     text-decoration: none;
     font-weight: 600;
+
+
+    
   }</style>
 <header>
   <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQyft9elYE1KjUkxx-ZbsXjskXL75lJlnFZ7Q&s" alt="Logo"> 
@@ -296,7 +298,7 @@ li::marker {
     The author accepts no liability for interpretation of articles or comments.
   </p>
   <div style="background-color:#0056a3; color:#ffffff; text-align:center; padding:10px; font-size:14px; margin-top:10px;">
-    <p style="margin:0;"><strong>www.shareindia.com | All rights reserved.</strong></p>
+    <p style="margin:0;"><strong>www.shareindia.com   </strong></p>
   </div>
 </footer>
 </div>
@@ -308,6 +310,91 @@ document.getElementById("submitBtn").addEventListener("click", () => {
   localStorage.setItem("reportHTML", document.getElementById("report").innerHTML);
   window.location.href = "logo-theme.html";
 });
+
+
+
+</script>
+
+<script>
+(function () {
+  const editableSelector = '#report [contenteditable="true"]';
+
+  // return the table cell (td/th) that contains el, or null
+  function findCell(el) {
+    return el.closest('td,th');
+  }
+
+  // return true if the given element is inside a table column whose header text is "trend" or "bias"
+  function isTrendOrBiasColumn(el) {
+    const cell = findCell(el);
+    if (!cell) return false;
+    const table = cell.closest('table');
+    if (!table) return false;
+
+    // find the header row (first tr that contains th)
+    const headerRow = Array.from(table.rows).find(r => r.querySelectorAll('th').length > 0);
+    if (!headerRow) return false;
+
+    const headers = Array.from(headerRow.querySelectorAll('th')).map(h => h.textContent.trim().toLowerCase());
+    const targetIndex = headers.findIndex(h => h === 'trend' || h === 'bias');
+    if (targetIndex === -1) return false;
+
+    // cell.cellIndex gives the column index within the row
+    return cell.cellIndex === targetIndex;
+  }
+
+ function updateBiasClass(el) {
+    if (!el) return;
+    // only apply styling for Trend / Bias table columns
+    if (!isTrendOrBiasColumn(el)) return;
+
+    const txt = (el.textContent || '').trim().toLowerCase();
+
+    // prefer exact-word matching for neutral/positive/negative
+    const isNeutral = /\bneutral\b/.test(txt);
+    const isPositive = /\bpositive\b/.test(txt);
+    const isNegative = /\bnegative\b/.test(txt);
+
+    if (isNeutral) {
+      el.classList.add('neutral');
+      el.classList.remove('positive', 'negative');
+    } else if (isPositive) {
+      el.classList.add('positive');
+      el.classList.remove('negative', 'neutral');
+    } else if (isNegative) {
+      el.classList.add('negative');
+      el.classList.remove('positive', 'neutral');
+    } else {
+      el.classList.remove('positive', 'negative', 'neutral');
+    }
+  }
+
+  function attachListeners() {
+    const items = document.querySelectorAll(editableSelector);
+    items.forEach(el => {
+      // only attach to cells in Trend/Bias columns
+      if (!isTrendOrBiasColumn(el)) return;
+      // initialize
+      updateBiasClass(el);
+      // respond to user edits (typing / paste)
+      el.removeEventListener('input', el._biasInputHandler);
+      el._biasInputHandler = () => updateBiasClass(el);
+      el.addEventListener('input', el._biasInputHandler);
+      // also update on blur
+      el.removeEventListener('blur', el._biasBlurHandler);
+      el._biasBlurHandler = () => updateBiasClass(el);
+      el.addEventListener('blur', el._biasBlurHandler);
+    });
+  }
+
+  // observe DOM changes inside #report so newly added/editable nodes get listeners
+  const report = document.getElementById('report');
+  if (report) {
+    attachListeners();
+    const mo = new MutationObserver(() => attachListeners());
+    mo.observe(report, { childList: true, subtree: true, characterData: true });
+  }
+})();
 </script>
 
 </body>
