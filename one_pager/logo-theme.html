@@ -389,7 +389,7 @@ const dataUrl = await htmlToImage.toPng(node,{pixelRatio:2,backgroundColor:"#fff
       saveAs(zipBlob, `MorningReport_${new Date().toISOString().slice(0,10)}.zip`);
       updateStatus("Done!");
     }catch(e){ console.error(e); updateStatus("Error: "+e.message); }
-    finally{ generateBtn.disabled=false; }
+    finally{ generateBtn.disabled=false; } 
   });
 
 })();
