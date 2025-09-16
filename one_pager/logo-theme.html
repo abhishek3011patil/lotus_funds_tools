@@ -1,3 +1,4 @@
+<!-- ...existing code... -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -69,6 +70,63 @@
       border-radius:12px;
       /* keep visible for screen readers as decorative */
     }
+
+    /* Always use gray highlight for Option Call/Preferred Trade */
+    .highlight {
+      background: #f3f3f3 !important;
+      color: #000 !important;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+    .highlight ul,
+    .highlight ol {
+      margin: 0;
+      padding-left: 1.2em;
+    }
+    .highlight li::marker {
+      color: #000 !important;
+    }
+
+    header {
+      text-align: center;
+      border-bottom: 2px solid #eee;
+    }
+    header .logo-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 10px;
+    }
+    header img {
+      max-height: 60px;
+      width: auto;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .report-title {
+      font-size: 40px;
+      font-weight: 800;
+      color: #000000;
+    }
+    .report-date {
+      font-size: 16px;
+      font-weight: bold;
+      color: #000000;
+    }
+    footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #aa0365;
+    }
   </style>
   <!-- External libraries -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js" defer></script>
@@ -93,7 +151,7 @@
       <div class="card">
         <h2>1) Upload one or more logos</h2>
         <input id="logoInput" type="file" accept="image/*" multiple />
-        <div class="muted" style="margin-top:8px">Tip: name files like <span class="kbd">www.abccompany.com_FF6600.png</span> to auto-set footer link.</div>
+        <!-- Tip removed: filenames are used as footer labels (no color-suffix parsing) -->
         <div class="thumbs" id="thumbs"></div>
         <h2 style="margin-top:16px">(Optional) Logo URLs — one per line</h2>
         <textarea id="logoUrls" placeholder="https://example.com/path/logo.png\nhttps://...\n"></textarea>
@@ -167,20 +225,13 @@
   }
 
   function extractWebsiteAndColor(nameOrUrl){
-    let base = nameOrUrl.split('/').pop();
-    base = base.replace(/\.[a-z]{2,4}$/i,'');
-    const m = base.match(/(www\.[a-z0-9\.\-]+\.[a-z]{2,})(?:[_\-]([0-9a-fA-F]{6}))/i);
-    if(m){
-      return {
-        website: m[1],
-        color: "#" + m[2].toUpperCase()
-      };
-    }
-    const m2 = base.match(/(www\.[a-z0-9\.\-]+\.[a-z]{2,})/i);
-    return {
-      website: m2 ? m2[1] : "www.example.com",
-      color: DEFAULT_THEME
-    };
+    // Simplified: do NOT parse color from filename suffix.
+    // Return a website-like label (prefer www.domain.tld if present) and default color.
+    let base = (nameOrUrl || '').split('/').pop() || '';
+    base = base.split('?')[0].split('#')[0];
+    const m = base.match(/(www\.[a-z0-9\.\-]+\.[a-z]{2,})/i);
+    const website = m ? m[1] : base.replace(/\.[^/.]+$/, '') || 'www.example.com';
+    return { website, color: DEFAULT_THEME };
   }
 
   function serializeDoc(dom){ return "<!DOCTYPE html>"+dom.documentElement.outerHTML; }
@@ -218,41 +269,164 @@
     }
   }
 
-  function applyThemeAndBrand({html, logoDataURL, themeHex, website}){
+  // apply theme, logo and footer label into the base HTML
+  function applyThemeAndBrand({html, logoDataURL, themeHex, website, footerText}) {
     const parser = new DOMParser();
-    const doc = parser.parseFromString(html,"text/html");
-    const header = doc.querySelector("header img");
-    if(header && logoDataURL){
-      header.src = logoDataURL;
-      header.removeAttribute("srcset");
-      header.width = 180;
-      header.height = 60;
-      header.style.objectFit="contain";
+    const doc = parser.parseFromString(html, "text/html");
+
+    // set header logo
+    const headerImg = doc.querySelector("header img");
+    if (headerImg && logoDataURL) {
+      headerImg.src = logoDataURL;
+      headerImg.removeAttribute("srcset");
+      headerImg.width = 180;
+      headerImg.height = 60;
+      headerImg.style.objectFit = "contain";
     }
 
-    // ensure trend/bias styles are present in the doc head
-    try{
-      const style = doc.createElement('style');
-      style.textContent = `.positive{color:#00C853 !important;font-weight:600 !important}.negative{color:#D50000 !important;font-weight:600 !important}.neutral{color:#757575 !important;font-weight:600 !important}`;
-      doc.head.appendChild(style);
-    }catch(e){ /* ignore */ }
+    // ensure trend/bias styles are present
+    try {
+      const trendStyle = doc.createElement("style");
+      trendStyle.textContent = `.positive{color:#00C853 !important;font-weight:600 !important}.negative{color:#D50000 !important;font-weight:600 !important}.neutral{color:#757575 !important;font-weight:600 !important}`;
+      doc.head.appendChild(trendStyle);
+    } catch (e) {}
 
     // apply trend/bias coloring based on table headers and cell content
     applyTrendColors(doc);
 
+    // --- footer label: only set data-logo-label placeholder (do not clobber disclaimer or other markup) ---
+    if (footerText) {
+      try {
+        const footerLabel = (footerText || "").replace(/\.[^/.]+$/, "");
+        const placeholder = doc.querySelector("[data-logo-label]");
+
+        if (placeholder) {
+          placeholder.textContent = footerLabel;
+
+          // --- DYNAMIC STYLING FOR THE LABEL ONLY ---
+          // apply the chosen theme color to the filename label (do NOT touch the footer band)
+          placeholder.style.display = "block";
+          placeholder.style.color = themeHex;           // text color = chosen theme
+          placeholder.style.fontWeight = "600";
+          placeholder.style.marginTop = "6px";
+          placeholder.style.fontSize = "0.95rem";
+
+          // add subtle underline/indicator if you want it to look like a label (optional)
+          // placeholder.style.borderTop = "1px solid " + themeHex;
+          // placeholder.style.paddingTop = "6px";
+        } else {
+          const footerEl = doc.querySelector("footer") || doc.body;
+          const span = doc.createElement("span");
+          span.setAttribute("data-logo-label", "");
+          span.style.display = "block";
+          span.style.marginTop = "8px";
+          span.style.color = themeHex;
+          span.style.fontWeight = "600";
+          span.style.fontSize = "0.95rem";
+          span.textContent = footerLabel;
+          footerEl.appendChild(span);
+        }
+      } catch (e) {
+        console.warn("inject footerText failed", e);
+      }
+    }
+
+    // --- ensure builder footer CSS exists (so exported doc uses same footer rules) ---
+    try {
+      const footerCss = `
+        footer { margin-top:20px; text-align:center; font-size:0.9rem; color:#444; }
+        footer a { color: #0056a3; text-decoration: none; font-weight: 600; }
+      `;
+      const footerStyle = doc.createElement("style");
+      footerStyle.setAttribute("data-injected-footer-css", "1");
+      footerStyle.textContent = footerCss;
+      doc.head.appendChild(footerStyle);
+    } catch (e) {
+      console.warn("inject footer CSS failed", e);
+    }
+
+    // --- theme application: update CSS rules and inline styles, but preserve footer link color ---
+    try {
+      // update <style> blocks (CSS rules) to use themeHex where builder used #0056a3 or --theme
+      doc.querySelectorAll("style").forEach(styleEl => {
+        try {
+          styleEl.textContent = styleEl.textContent.replace(/--theme\s*:\s*#[0-9a-f]{6}/gi, `--theme:${themeHex}`);
+          styleEl.textContent = styleEl.textContent.replace(/#0056a3/gi, themeHex);
+        } catch (e) {}
+      });
+
+      // update inline styles: replace occurrences of builder blue with themeHex
+      // but do NOT change color on footer <a> elements
+      doc.querySelectorAll("[style]").forEach(el => {
+        if (el.tagName.toLowerCase() === "a" && el.closest("footer")) return;
+        const s = el.getAttribute("style") || "";
+        el.setAttribute("style", s.replace(/#0056a3/gi, themeHex));
+      });
+
+      // specifically update footer band(s) (the div with original background-color) to themeHex
+      (function updateFooterBand() {
+        // find footer child divs that have background-color set (builder places the colored band here)
+        const candidates = Array.from(doc.querySelectorAll("footer > div, footer div"));
+        const bandEls = candidates.filter(d => /background-?color\s*:/.test((d.getAttribute("style") || "").toLowerCase()));
+        // fallback: if none found, take first footer child div
+        if (bandEls.length === 0) {
+          const f = doc.querySelector("footer > div");
+          if (f) bandEls.push(f);
+        }
+        function contrastText(hex) {
+          try {
+            const c = (hex || "").replace("#", "");
+            const r = parseInt(c.substr(0, 2), 16);
+            const g = parseInt(c.substr(2, 2), 16);
+            const b = parseInt(c.substr(4, 2), 16);
+            const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+            return lum > 0.55 ? "#111" : "#fff";
+          } catch (e) {
+            return "#fff";
+          }
+        }
+        bandEls.forEach(el => {
+          try {
+            el.style.backgroundColor = themeHex;
+            el.style.color = contrastText(themeHex);
+            // ensure inner footer anchors keep builder link color
+            el.querySelectorAll("a").forEach(a => {
+              a.style.color = "#0056a3";
+              a.style.textDecoration = "none";
+              a.style.fontWeight = "600";
+            });
+          } catch (e) {}
+        });
+      })();
+    } catch (e) {
+      console.warn("theme injection failed", e);
+    }
+
+    // Remove any existing footer and add the builder-style footer
+let oldFooter = doc.querySelector("footer");
+if (oldFooter) oldFooter.remove();
+
+const footer = doc.createElement("footer");
+footer.innerHTML = `
+  <p class="small-note">
+    Disclaimer : Stock market investments are subject to market risks. All information provided is for educational and informational purposes only and represents personal views. It is not investment advice. Clients may hold positions in mentioned stocks and receive additional real-time information. No guarantees on returns. Consult a financial advisor before investing.
+  </p>
+  <div style="background-color:#aa0365; color:#ffffff; text-align:center; padding:10px; font-size:14px; margin-top:10px;">
+    <!-- Optional: Add footer content or logos here -->
+  </div>
+`;
+doc.body.appendChild(footer);
+
+    // return serialized full document
     let htmlStr = doc.documentElement.outerHTML;
-    htmlStr = htmlStr.replace(/#0056a3/gi, themeHex);
-    htmlStr = htmlStr.replace(/--theme\s*:\s*#[0-9a-f]{6}/gi, `--theme:${themeHex}`);
-    return serializeDoc(parser.parseFromString(htmlStr,"text/html"));
+    return serializeDoc(parser.parseFromString(htmlStr, "text/html"));
   }
 
   async function waitForImages(node){
     const imgs = node.querySelectorAll("img");
     await Promise.all([...imgs].map(img=>{
       if(img.complete) return;
-      return new Promise(res=>{
-        img.onload=res; img.onerror=res;
-      });
+      return new Promise(res=>{ img.onload=res; img.onerror=res; });
     }));
   }
 
@@ -362,7 +536,8 @@
       html: baseReportHTML,
       logoDataURL: logo.dataURL,
       themeHex: logo.color,
-      website
+      website,
+      footerText: logo.label   // <--- pass filename/label into preview
     });
     previewEl.innerHTML = htmlOut;
     // ensure preview is read-only: remove contenteditable, disable form controls, remove event handlers
@@ -417,9 +592,9 @@
       const colorInput = thumbDiv.querySelector('input[type="color"]');
       colorInput.addEventListener('input', (e) => {
         logoStates[idx].color = e.target.value;
-        if (selectedLogoIdx === idx) {
-          renderPreview(selectedLogoIdx);
-        }
+        selectedLogoIdx = idx;
+        renderThumbs();
+        renderPreview(selectedLogoIdx);
       });
       thumbs.appendChild(thumbDiv);
     });
@@ -493,7 +668,8 @@
         updateStatus(`Processing ${i+1}/${logos.length} — ${item.label}`);
         const {website, color} = extractWebsiteAndColor(item.label);
         const themeColor = item.customColor || color;
-        const htmlOut = applyThemeAndBrand({html: baseReportHTML, logoDataURL:item.dataURL, themeHex:themeColor, website});
+        // pass item.label as footerText so saved HTML/PDF/PNG include the filename as footer/description
+        const htmlOut = applyThemeAndBrand({html: baseReportHTML, logoDataURL:item.dataURL, themeHex:themeColor, website, footerText: item.label});
         const safeBase = website.replace(/[^a-z0-9\-\.]/gi,'_');
         const { pngBlob, dataUrl } = await renderPNGFromHTML(htmlOut);
         folder.file(`${safeBase}.html`, htmlOut);
@@ -516,14 +692,7 @@
         }catch(e){
           console.warn("PDF generation failed for", safeBase, e);
         }
-      }
-
-      updateStatus("Bundling ZIP...");
-      const zipBlob = await zip.generateAsync({type:"blob"});
-      saveAs(zipBlob, `MorningReport_${new Date().toISOString().slice(0,10)}.zip`);
-      updateStatus("Done!");
-    }catch(e){ console.error(e); updateStatus("Error: "+e.message); }
-    finally{ generateBtn.disabled=false; }
+      }      updateStatus("Bundling ZIP...");      const zipBlob = await zip.generateAsync({type:"blob"});      saveAs(zipBlob, `MorningReport_${new Date().toISOString().slice(0,10)}.zip`);      updateStatus("Done!");    }catch(e){ console.error(e); updateStatus("Error: "+e.message); }    finally{ generateBtn.disabled=false; }
   });
 
   // initialize: make overlay active and disable any editing in the initial preview
@@ -534,3 +703,4 @@
 </script>
 </body>
 </html>
+<!-- ...existing code... -->
