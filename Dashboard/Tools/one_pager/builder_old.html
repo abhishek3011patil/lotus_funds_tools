@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Morning Report — Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  body {
+    font-family: 'Inter', sans-serif;
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+    font-family: 'Inter', sans-serif;
+    background: #fff;
+    color: #000;
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+    line-height: 1.5;
+    
+  }
+  [contenteditable="true"] {
+    cursor: text;
+    transition: background 0.2s;
+  }
+  [contenteditable="true"]:hover {
+    outline: 1px dashed #aaa;
+    background: #fff7c2;
+    color: black;
+  }
+  [contenteditable="true"]:focus {
+    outline: 2px solid #ffb300;
+    background: #fff2a8;
+    color: black;
+  }
+  button {
+    margin-top: 20px;
+    background: #0056a3;
+    color: #fff;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div id="report">
+
+    <style>header {
+    text-align: center;
+    margin-bottom: 20px;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 10px;
+  }
+  header img {
+    max-height: 50x;
+    margin-bottom: 10px;
+  }
+  h1 {
+    font-size: 1.8rem;
+    font-weight: 800;
+    margin: 5px 0;
+  }
+  h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin: 20px 0 10px;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 5px;
+  }
+  .date {
+    font-weight: 600;
+    font-size: 1.1rem;
+    margin: 5px 0;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  
+li::marker {
+  color: white;
+}
+
+  th, td {
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #ddd;
+    font-size: 0.95rem;
+  }
+  th {
+    background: #0056a3;
+    color: #fff;
+    font-weight: 600;
+  }
+   .positive {
+    color: #00C853;
+    font-weight: 600;
+  }
+  .negative {
+    color: #D50000;
+    font-weight: 600;
+  }
+  .neutral {
+    color: #757575; /* gray */
+    font-weight: 600;
+  }
+  .highlight {
+    background: #0056a3;
+    color: #fff;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+  }
+  footer {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #444;
+  }
+  footer a {
+    color: #0056a3;
+    text-decoration: none;
+    font-weight: 600;
+  }</style>
+<header>
+  <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQyft9elYE1KjUkxx-ZbsXjskXL75lJlnFZ7Q&s" alt="Logo"> 
+  <h1>The Morning Report</h1>
+  <div class="date" contenteditable="true">Monday, August 18th 2025</div>
+</header>
+
+<table>
+  <tr>
+    <th>INDICES</th>
+    <th>Closing Price</th>
+    <th>Support</th>
+    <th>Resistance</th>
+    <th>21 DMA</th>
+    <th>200 DMA</th>
+    <th>Range</th>
+    <th>Trend</th>
+  </tr>
+  <tr>
+    <td>NIFTY</td>
+    <td contenteditable="true">24632</td>
+    <td contenteditable="true">24409</td>
+    <td contenteditable="true">24857</td>
+    <td contenteditable="true">24775</td>
+    <td contenteditable="true">24047</td>
+    <td contenteditable="true">24550-24901</td>
+    <td contenteditable="true" class="positive">Positive</td>
+  </tr>
+  <tr>
+    <td>BANK-NIFTY</td>
+    <td contenteditable="true">55432</td>
+    <td contenteditable="true">54850</td>
+    <td contenteditable="true">56000</td>
+    <td contenteditable="true">55984</td>
+    <td contenteditable="true">52760</td>
+    <td contenteditable="true">54920-55820</td>
+    <td contenteditable="true" class="positive">Positive</td>
+  </tr>
+</table>
+
+<h2>Preferred Trade</h2>
+<div class="highlight">
+  <ul style="list-style-type:disc">
+    <li contenteditable="true">NIFTY (CMP 24632): Buy at CMP. Stop at 24261. Targets 24750/24857. Aggressive targets at 25000-25300 zone.</li>
+    <li contenteditable="true">BANKNIFTY (CMP 55432): Buy at CMP. Stop at 54501. Targets 55750/56100. Aggressive targets at 56700 mark.</li>
+  </ul>
+</div>
+
+<h2>All About Stocks</h2>
+<table>
+  <tr>
+    <th>Instrument</th>
+    <th>CMP</th>
+    <th>Support</th>
+    <th>Resistance</th>
+    <th>21 DMA</th>
+    <th>200 DMA</th>
+    <th>Bias</th>
+    <th>Preferred Trade</th>
+  </tr>
+  <tr>
+    <td contenteditable="true">Eternal</td>
+    <td contenteditable="true">318</td>
+    <td contenteditable="true">313</td>
+    <td contenteditable="true">333</td>
+    <td contenteditable="true">300</td>
+    <td contenteditable="true">250</td>
+    <td contenteditable="true" class="positive">Positive</td>
+    <td contenteditable="true">Buy at CMP. Stop 303. Targets 321/333. Aggressive targets at 347.</td>
+  </tr>
+  <tr>
+    <td contenteditable="true">Maruti</td>
+    <td contenteditable="true">12936</td>
+    <td contenteditable="true">12511</td>
+    <td contenteditable="true">13501</td>
+    <td contenteditable="true">12551</td>
+    <td contenteditable="true">12004</td>
+    <td contenteditable="true" class="positive">Positive</td>
+    <td contenteditable="true">Buy at CMP. Stop at 12331. Targets 13287/13501. Aggressive targets 14151.</td>
+  </tr>
+  <tr>
+    <td contenteditable="true">SBIN</td>
+    <td contenteditable="true">827</td>
+    <td contenteditable="true">808</td>
+    <td contenteditable="true">843</td>
+    <td contenteditable="true">811</td>
+    <td contenteditable="true">791</td>
+    <td contenteditable="true" class="positive">Positive</td>
+    <td contenteditable="true">Buy at CMP. Stop at 805. Targets 843/857. Aggressive targets 875.</td>
+  </tr>
+</table>
+
+<h2>Option Call</h2>
+<p contenteditable="true">BUY NIFTY 21st AUGUST CE Strike Price 24700 at CMP 119.35. Maximum Loss: ₹ 8951.5. Profit: Unlimited. Stop: Exit Call Option if NIFTY AUGUST FUTURES moves below 25475. Analyst’s Remark: Rebound play likely amidst oversold conditions.</p>
+
+<h2>All About Stocks (Medium Term Trades)</h2>
+<table>
+  <tr>
+    <th>Stocks</th>
+    <th>CMP</th>
+    <th>Support</th>
+    <th>Resistance</th>
+    <th>21 DMA</th>
+    <th>200 DMA</th>
+    <th>Bias</th>
+    <th>Preferred Trade</th>
+  </tr>
+  <tr>
+    <td contenteditable="true">CIPLA</td>
+    <td contenteditable="true">1564</td>
+    <td contenteditable="true">1409</td>
+    <td contenteditable="true">1702</td>
+    <td contenteditable="true">1514</td>
+    <td contenteditable="true">1488</td>
+    <td contenteditable="true" class="positive">Positive</td>
+    <td contenteditable="true">Buy at CMP, targeting 1595/1702 mark and then at 1851 mark. Stop above 1451. Rationale: Breakout play likely amidst positive momentum oscillators.</td>
+  </tr>
+  <tr>
+    <td contenteditable="true">NETWEB</td>
+    <td contenteditable="true">2125</td>
+    <td contenteditable="true">1451</td>
+    <td contenteditable="true">2551</td>
+    <td contenteditable="true">2041</td>
+    <td contenteditable="true">2026</td>
+    <td contenteditable="true" class="positive">Positive</td>
+    <td contenteditable="true">Buy at CMP, targeting 2330/2551 mark and then at 3000 mark. Stop above 1451. Rationale: Stock price likely to move from a lower consolidation zone.</td>
+  </tr>
+  <tr>
+    <td contenteditable="true">OSWAL PUMPS</td>
+    <td contenteditable="true">794</td>
+    <td contenteditable="true">660</td>
+    <td contenteditable="true">1000</td>
+    <td contenteditable="true">749</td>
+    <td contenteditable="true">-</td>
+    <td contenteditable="true" class="positive">Positive</td>
+    <td contenteditable="true">Buy at CMP, targeting 881/1000 mark and then at 1250 mark. Stop above 669. Rationale: Stock price likely to move from a  higher as sequence of higher highs/lows</td>
+  </tr>
+</table>
+
+<h2>Technical Strategy</h2>
+<table>
+  <tr>
+    <th>Stocks</th>
+    <th>Action</th>
+    <th>Target</th>
+    <th>Support</th>
+    <th>Resistance</th>
+    <th>Holding Period</th>
+    <th>Rationale</th>
+  </tr>
+  <tr>
+    <td contenteditable="true">M&M CMP 3265</td>
+    <td contenteditable="true" class="positive">Buy</td>
+    <td contenteditable="true">3321</td>
+    <td contenteditable="true">3061/2761</td>
+    <td contenteditable="true">3321/3750</td>
+    <td contenteditable="true">9-12 months</td>
+    <td contenteditable="true">Breaking out from a higher consolidation zone on all time-frames.</td>
+  </tr>
+</table>
+
+<footer>
+  <p contenteditable="true" class="small-note">
+    Disclosures & Disclaimers: Stock market investments are subject to market risks.  
+    All information is for educational and informational use only.  
+    The author accepts no liability for interpretation of articles or comments.
+  </p>
+
+
+  <!-- filename label (will be replaced by logo-theme) -->
+  <div style="margin-top:12px; text-align:center;">
+    <!-- footer band uses CSS variables so theme injector can update color dynamically -->
+    <div class="footer-band" style="background-color:var(--theme,#0056a3); color:var(--theme-text,#ffffff); text-align:center; padding:10px; font-size:14px; margin-top:10px;">
+      <p style="margin:0;"><strong>www.shareindia.com</strong></p>
+    </div>
+
+    <!-- filename label (will be replaced by logo-theme) -->
+    <div style="margin-top:8px; text-align:center; color:#444;">
+      <span data-logo-label style="display:block; font-size:0.95rem; color:inherit;">{{logoLabel}}</span>
+    </div>
+  </div>
+</footer>
+</div>
+
+<button id="submitBtn">Submit & Continue</button>
+
+<script>
+document.getElementById("submitBtn").addEventListener("click", () => {
+  localStorage.setItem("reportHTML", document.getElementById("report").innerHTML);
+  window.location.href = "logo-theme.html";
+});
+</script>
+
+<script>
+(function () {
+  const editableSelector = '#report [contenteditable="true"]';
+
+  // return the table cell (td/th) that contains el, or null
+  function findCell(el) {
+    return el.closest('td,th');
+  }
+
+  // return true if the given element is inside a table column whose header text is "trend" or "bias"
+  function isTrendOrBiasColumn(el) {
+    const cell = findCell(el);
+    if (!cell) return false;
+    const table = cell.closest('table');
+    if (!table) return false;
+
+    // find the header row (first tr that contains th)
+    const headerRow = Array.from(table.rows).find(r => r.querySelectorAll('th').length > 0);
+    if (!headerRow) return false;
+
+    const headers = Array.from(headerRow.querySelectorAll('th')).map(h => h.textContent.trim().toLowerCase());
+    const targetIndex = headers.findIndex(h => h === 'trend' || h === 'bias');
+    if (targetIndex === -1) return false;
+
+    // cell.cellIndex gives the column index within the row
+    return cell.cellIndex === targetIndex;
+  }
+
+ function updateBiasClass(el) {
+    if (!el) return;
+    // only apply styling for Trend / Bias table columns
+    if (!isTrendOrBiasColumn(el)) return;
+
+    const txt = (el.textContent || '').trim().toLowerCase();
+
+    // prefer exact-word matching for neutral/positive/negative
+    const isNeutral = /\bneutral\b/.test(txt);
+    const isPositive = /\bpositive\b/.test(txt);
+    const isNegative = /\bnegative\b/.test(txt);
+
+    if (isNeutral) {
+      el.classList.add('neutral');
+      el.classList.remove('positive', 'negative');
+    } else if (isPositive) {
+      el.classList.add('positive');
+      el.classList.remove('negative', 'neutral');
+    } else if (isNegative) {
+      el.classList.add('negative');
+      el.classList.remove('positive', 'neutral');
+    } else {
+      el.classList.remove('positive', 'negative', 'neutral');
+    }
+  }
+
+  function attachListeners() {
+    const items = document.querySelectorAll(editableSelector);
+    items.forEach(el => {
+      // only attach to cells in Trend/Bias columns
+      if (!isTrendOrBiasColumn(el)) return;
+      // initialize
+      updateBiasClass(el);
+      // respond to user edits (typing / paste)
+      el.removeEventListener('input', el._biasInputHandler);
+      el._biasInputHandler = () => updateBiasClass(el);
+      el.addEventListener('input', el._biasInputHandler);
+      // also update on blur
+      el.removeEventListener('blur', el._biasBlurHandler);
+      el._biasBlurHandler = () => updateBiasClass(el);
+      el.addEventListener('blur', el._biasBlurHandler);
+    });
+  }
+
+  // observe DOM changes inside #report so newly added/editable nodes get listeners
+  const report = document.getElementById('report');
+  if (report) {
+    attachListeners();
+    const mo = new MutationObserver(() => attachListeners());
+    mo.observe(report, { childList: true, subtree: true, characterData: true });
+  }
+})();
+</script>
+
+</body>
+</html>

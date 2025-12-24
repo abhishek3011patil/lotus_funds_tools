@@ -1,0 +1,195 @@
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Inter', 'Segoe UI', sans-serif;
+    }
+
+    body {
+        background: #f9f1f6;
+        color: #2f1024;
+        line-height: 1.6;
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: stretch;
+        justify-content: center;
+    }
+
+    .header {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    nav {
+        background-color: #AA0365;
+        padding: 12px 20px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        text-align: center;
+        gap: 8px;
+        box-shadow: 0 6px 18px rgba(170, 3, 101, 0.25);
+
+        width: 100%;
+    }
+
+
+
+    nav a {
+        color: #ffffff;
+        text-decoration: none;
+        padding: 10px 14px;
+        display: flex;
+        align-items: center;
+        text-align: center;
+        gap: 8px;
+        border-radius: 8px;
+        transition: background 0.2s ease, transform 0.2s ease;
+        font-size: 14px;
+        white-space: nowrap;
+    }
+
+    /* nav a i {
+        font-size: 16px;
+        color: white;
+    } */
+
+    .Logout {
+        margin-left: auto;
+        background: #ffe6f3;
+        color: #AA0365;
+        font-weight: 600;
+    }
+
+    .Logout i {
+        color: #AA0365;
+    }
+
+    .Logout:hover {
+        background: #ffd1eb;
+        color: #7a0248;
+    }
+
+    .content {
+        flex: 1;
+        background: #fff;
+        padding: 24px 28px;
+        border-radius: 16px;
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.07);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .content h1 {
+        color: #AA0365;
+        margin-bottom: 12px;
+    }
+
+    .layout {
+        width: 100%;
+        max-width: 12000px;
+        margin: 0 auto;
+        display: flex;
+        gap: 24px;
+        padding: 24px;
+    }
+
+    .sidebar {
+        width: 260px;
+        background-color: #AA0365;
+        border-radius: 16px;
+        padding: 20px 16px;
+        box-shadow: 0 6px 18px rgba(170, 3, 101, 0.25);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .sidebar-header {
+        padding: 4px 10px 12px 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+        margin-bottom: 8px;
+    }
+
+    .sidebar-title {
+        color: #ffd1eb;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        font-size: 18px;
+    }
+
+    .sidebar-nav {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .sidebar-nav a {
+        color: #ffffff;
+        text-decoration: none;
+        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border-radius: 8px;
+        transition: background 0.2s ease, transform 0.2s ease;
+        font-size: 14px;
+    }
+
+    .sidebar-nav a i {
+        font-size: 16px;
+        width: 18px;
+        text-align: center;
+    }
+
+    .sidebar-nav a:hover {
+        background: rgba(255, 255, 255, 0.12);
+        transform: translateX(2px);
+    }
+
+    .sidebar-nav a.logout {
+        margin-top: 10px;
+        background: #ffe6f3;
+        color: #AA0365;
+        font-weight: 600;
+    }
+
+    .sidebar-nav a.logout i {
+        color: #AA0365;
+    }
+
+    .sidebar-nav a.logout:hover {
+        background: #ffd1eb;
+        color: #7a0248;
+        transform: translateX(2px);
+    }
+
+    @media (max-width: 768px) {
+        .layout {
+            flex-direction: column;
+        }
+
+        .sidebar {
+            width: 100%;
+            flex-direction: row;
+            align-items: flex-start;
+            overflow-x: auto;
+        }
+
+        .sidebar-header {
+            border-bottom: none;
+            margin-bottom: 0;
+            margin-right: 12px;
+        }
+
+        .sidebar-nav {
+            flex-direction: row;
+            flex-wrap: nowrap;
+        }
+    }
+
+    /* span{
+    text-align: center;
+} */

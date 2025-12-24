@@ -1,0 +1,706 @@
+<!-- ...existing code... -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Morning Report — Logo & Theme Generator</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{--theme:#0056a3}
+    *{box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:#f7f7fb;color:#111;margin:0}
+    header.app{position:sticky;top:0;background:#fff;border-bottom:1px solid #eee;padding:14px 18px;display:flex;gap:12px;align-items:center;z-index:10}
+    .container{max-width:1100px;margin:0 auto;padding:18px}
+    h1{font-size:1.6rem;margin:0}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .card{background:#fff;border:1px solid #eee;border-radius:14px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+    .card h2{margin:0 0 8px;font-size:1.1rem}
+    .btn{appearance:none;border:0;background:var(--theme);color:#fff;font-weight:700;padding:10px 14px;border-radius:10px;cursor:pointer}
+    .btn:disabled{opacity:.5;cursor:not-allowed}
+    .muted{color:#666;font-size:.92rem}
+    .stack{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    input[type="file"]{display:block;width:100%}
+    textarea{width:100%;min-height:90px;border:1px solid #e2e2e2;border-radius:10px;padding:10px;font-family:inherit}
+    #reportPreviewWrap{overflow:auto;border:1px dashed #ddd;border-radius:14px;background:#fff;position:relative}
+    #reportPreview{margin:0 auto;padding:25px;background:#fff}
+    .thumbs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    .thumbs .thumb{border:1px solid #eee;border-radius:10px;overflow:hidden;width:84px;height:84px;display:flex;align-items:center;justify-content:center;background:#fafafa}
+    .status{font-size:.9rem;white-space:pre-line}
+    .kbd{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,'Liberation Mono','Courier New',monospace;background:#f1f1f5;border:1px solid #e4e4ea;border-bottom-width:2px;border-radius:8px;padding:2px 6px}
+    /* Hidden render area for crisp PNG capture */
+    #renderSandbox{position:fixed;left:-10000px;top:-10000px;background:#fff;padding:0;margin:0}
+    /* Constrain logos in sandbox/export */
+    #renderSandbox header img,
+    #renderSandbox .logo img {
+      width: 180px !important;
+      height: 60px !important;
+      object-fit: contain;
+    }
+
+    /* Trend/bias color classes for preview/export */
+    .positive { color: #00C853 !important; font-weight:600 !important; }
+    .negative { color: #D50000 !important; font-weight:600 !important; }
+    .neutral  { color: #757575 !important; font-weight:600 !important; }
+
+    /* Visual hint that the preview is read-only */
+    #reportPreview.readonly { position:relative; }
+    #reportPreview.readonly::after{
+      content: "Preview — read only";
+      position:absolute;
+      right:10px;
+      top:10px;
+      background:#fff;
+      color:#666;
+      border:1px solid #eee;
+      padding:4px 8px;
+      border-radius:8px;
+      font-size:.8rem;
+      pointer-events:none;
+      opacity:.95;
+    }
+
+    /* Overlay that blocks interactions but forwards scroll/touch/keyboard to the preview wrap */
+    .preview-overlay{
+      position:absolute;
+      inset:0;
+      z-index:6;
+      background:transparent;
+      cursor:default;
+      border-radius:12px;
+      /* keep visible for screen readers as decorative */
+    }
+
+    /* Always use gray highlight for Option Call/Preferred Trade */
+    .highlight {
+      background: #f3f3f3 !important;
+      color: #000 !important;
+      padding: 10px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+    .highlight ul,
+    .highlight ol {
+      margin: 0;
+      padding-left: 1.2em;
+    }
+    .highlight li::marker {
+      color: #000 !important;
+    }
+
+    header {
+      text-align: center;
+      border-bottom: 2px solid #eee;
+    }
+    header .logo-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 18px;
+      margin-bottom: 10px;
+    }
+    header img {
+      max-height: 60px;
+      width: auto;
+      object-fit: contain;
+      margin-bottom: 10px;
+    }
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .report-title {
+      font-size: 40px;
+      font-weight: 800;
+      color: #000000;
+    }
+    .report-date {
+      font-size: 16px;
+      font-weight: bold;
+      color: #000000;
+    }
+    footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #aa0365;
+    }
+  </style>
+  <!-- External libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html-to-image/1.11.11/html-to-image.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+</head>
+<body>
+  <header class="app">
+    <h1>Logo & Theme Generator</h1>
+    <div class="muted">Step 2 · Apply logos, colors, and export HTML+PNG</div>
+    <div style="margin-left:auto" class="stack">
+      <button id="backBtn" class="btn" style="background:#666">← Back</button>
+      <button id="generateBtn" class="btn">Generate ZIP</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <div class="row">
+      <div class="card">
+        <h2>1) Upload one or more logos</h2>
+        <input id="logoInput" type="file" accept="image/*" multiple />
+        <!-- Tip removed: filenames are used as footer labels (no color-suffix parsing) -->
+        <div class="thumbs" id="thumbs"></div>
+        <h2 style="margin-top:16px">(Optional) Logo URLs — one per line</h2>
+        <textarea id="logoUrls" placeholder="https://example.com/path/logo.png\nhttps://...\n"></textarea>
+        <div class="muted">Remote images must allow CORS to extract colors reliably.</div>
+<div class="thumbs" id="thumbs"></div>
+<div id="colorPickerWrap" style="margin-top:10px"></div>
+
+      </div>
+
+      <div class="card">
+        <h2>2) Report preview (from Builder)</h2>
+        <div class="muted">Loaded from <span class="kbd">localStorage.reportHTML</span>. This is the base used for each logo.</div>
+        <div id="reportPreviewWrap">
+          <div id="reportPreview" class="readonly" aria-readonly="true"></div>
+          <!-- overlay blocks interactions but forwards scroll/touch/keyboard to the wrap -->
+          <div id="previewOverlay" class="preview-overlay" aria-hidden="true" title="Read-only preview"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:18px">
+      <h2>3) Status</h2>
+      <div class="status" id="status">Idle</div>
+    </div>
+  </div>
+
+  <div id="renderSandbox"></div>
+
+<script>
+(function(){
+  const DEFAULT_THEME = '#0056a3';
+  const statusEl = document.getElementById('status');
+  const previewEl = document.getElementById('reportPreview');
+  const previewWrap = document.getElementById('reportPreviewWrap');
+  const overlayEl = document.getElementById('previewOverlay');
+  const logoInput = document.getElementById('logoInput');
+  const logoUrls = document.getElementById('logoUrls');
+  const sandbox = document.getElementById('renderSandbox');
+  const backBtn = document.getElementById('backBtn');
+  const generateBtn = document.getElementById('generateBtn');
+  const thumbs = document.getElementById('thumbs');
+  let logoStates = []; // {file, dataURL, color, label}
+  let selectedLogoIdx = 0;
+
+  backBtn.addEventListener('click',()=> history.back());
+
+  const baseReportHTML = localStorage.getItem('reportHTML') || 
+    '<p style="padding:16px">No report found in localStorage. Go back and press "Submit & Continue".</p>';
+  previewEl.innerHTML = baseReportHTML;
+
+  const sleep = ms => new Promise(r=>setTimeout(r,ms));
+
+  async function fileToDataURL(file){
+    return new Promise((resolve,reject)=>{
+      const fr = new FileReader();
+      fr.onload = ()=>resolve(fr.result);
+      fr.onerror = reject;
+      fr.readAsDataURL(file);
+    });
+  }
+
+  async function urlToDataURL(url){
+    const res = await fetch(url);
+    const blob = await res.blob();
+    return new Promise((resolve,reject)=>{
+      const fr = new FileReader();
+      fr.onload = ()=>resolve(fr.result);
+      fr.onerror = reject;
+      fr.readAsDataURL(blob);
+    });
+  }
+
+  function extractWebsiteAndColor(nameOrUrl){
+    // Simplified: do NOT parse color from filename suffix.
+    // Return a website-like label (prefer www.domain.tld if present) and default color.
+    let base = (nameOrUrl || '').split('/').pop() || '';
+    base = base.split('?')[0].split('#')[0];
+    const m = base.match(/(www\.[a-z0-9\.\-]+\.[a-z]{2,})/i);
+    const website = m ? m[1] : base.replace(/\.[^/.]+$/, '') || 'www.example.com';
+    return { website, color: DEFAULT_THEME };
+  }
+
+  function serializeDoc(dom){ return "<!DOCTYPE html>"+dom.documentElement.outerHTML; }
+
+  // apply trend/bias coloring to tables inside the document
+  function applyTrendColors(doc){
+    try{
+      const tables = Array.from(doc.querySelectorAll('table'));
+      tables.forEach(table=>{
+        // find header row (first tr that has th)
+        const headerRow = Array.from(table.rows).find(r=> r.querySelectorAll('th').length > 0);
+        if(!headerRow) return;
+        const headers = Array.from(headerRow.querySelectorAll('th')).map(h=>h.textContent.trim().toLowerCase());
+        const targetIndex = headers.findIndex(h => h === 'trend' || h === 'bias');
+        if(targetIndex === -1) return;
+        // apply classes to cells in that column (skip header row)
+        Array.from(table.rows).forEach((row, rIdx)=>{
+          if(row === headerRow) return;
+          const cells = Array.from(row.querySelectorAll('td,th'));
+          if(!cells || !cells.length) return;
+          const cell = cells[targetIndex];
+          if(!cell) return;
+          const txt = (cell.textContent || '').trim().toLowerCase();
+          const isNeutral = /\bneutral\b/.test(txt);
+          const isPositive = /\bpositive\b/.test(txt);
+          const isNegative = /\bnegative\b/.test(txt);
+          cell.classList.remove('positive','negative','neutral');
+          if(isNeutral) cell.classList.add('neutral');
+          else if(isPositive) cell.classList.add('positive');
+          else if(isNegative) cell.classList.add('negative');
+        });
+      });
+    }catch(e){
+      console.warn('applyTrendColors failed', e);
+    }
+  }
+
+  // apply theme, logo and footer label into the base HTML
+  function applyThemeAndBrand({html, logoDataURL, themeHex, website, footerText}) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, "text/html");
+
+    // set header logo
+    const headerImg = doc.querySelector("header img");
+    if (headerImg && logoDataURL) {
+      headerImg.src = logoDataURL;
+      headerImg.removeAttribute("srcset");
+      headerImg.width = 180;
+      headerImg.height = 60;
+      headerImg.style.objectFit = "contain";
+    }
+
+    // ensure trend/bias styles are present
+    try {
+      const trendStyle = doc.createElement("style");
+      trendStyle.textContent = `.positive{color:#00C853 !important;font-weight:600 !important}.negative{color:#D50000 !important;font-weight:600 !important}.neutral{color:#757575 !important;font-weight:600 !important}`;
+      doc.head.appendChild(trendStyle);
+    } catch (e) {}
+
+    // apply trend/bias coloring based on table headers and cell content
+    applyTrendColors(doc);
+
+    // --- footer label: only set data-logo-label placeholder (do not clobber disclaimer or other markup) ---
+    if (footerText) {
+      try {
+        const footerLabel = (footerText || "").replace(/\.[^/.]+$/, "");
+        const placeholder = doc.querySelector("[data-logo-label]");
+
+        if (placeholder) {
+          placeholder.textContent = footerLabel;
+
+          // --- DYNAMIC STYLING FOR THE LABEL ONLY ---
+          // apply the chosen theme color to the filename label (do NOT touch the footer band)
+          placeholder.style.display = "block";
+          placeholder.style.color = themeHex;           // text color = chosen theme
+          placeholder.style.fontWeight = "600";
+          placeholder.style.marginTop = "6px";
+          placeholder.style.fontSize = "0.95rem";
+
+          // add subtle underline/indicator if you want it to look like a label (optional)
+          // placeholder.style.borderTop = "1px solid " + themeHex;
+          // placeholder.style.paddingTop = "6px";
+        } else {
+          const footerEl = doc.querySelector("footer") || doc.body;
+          const span = doc.createElement("span");
+          span.setAttribute("data-logo-label", "");
+          span.style.display = "block";
+          span.style.marginTop = "8px";
+          span.style.color = themeHex;
+          span.style.fontWeight = "600";
+          span.style.fontSize = "0.95rem";
+          span.textContent = footerLabel;
+          footerEl.appendChild(span);
+        }
+      } catch (e) {
+        console.warn("inject footerText failed", e);
+      }
+    }
+
+    // --- ensure builder footer CSS exists (so exported doc uses same footer rules) ---
+    try {
+      const footerCss = `
+        footer { margin-top:20px; text-align:center; font-size:0.9rem; color:#444; }
+        footer a { color: #0056a3; text-decoration: none; font-weight: 600; }
+      `;
+      const footerStyle = doc.createElement("style");
+      footerStyle.setAttribute("data-injected-footer-css", "1");
+      footerStyle.textContent = footerCss;
+      doc.head.appendChild(footerStyle);
+    } catch (e) {
+      console.warn("inject footer CSS failed", e);
+    }
+
+    // --- theme application: update CSS rules and inline styles, but preserve footer link color ---
+    try {
+      // update <style> blocks (CSS rules) to use themeHex where builder used #0056a3 or --theme
+      doc.querySelectorAll("style").forEach(styleEl => {
+        try {
+          styleEl.textContent = styleEl.textContent.replace(/--theme\s*:\s*#[0-9a-f]{6}/gi, `--theme:${themeHex}`);
+          styleEl.textContent = styleEl.textContent.replace(/#0056a3/gi, themeHex);
+        } catch (e) {}
+      });
+
+      // update inline styles: replace occurrences of builder blue with themeHex
+      // but do NOT change color on footer <a> elements
+      doc.querySelectorAll("[style]").forEach(el => {
+        if (el.tagName.toLowerCase() === "a" && el.closest("footer")) return;
+        const s = el.getAttribute("style") || "";
+        el.setAttribute("style", s.replace(/#0056a3/gi, themeHex));
+      });
+
+      // specifically update footer band(s) (the div with original background-color) to themeHex
+      (function updateFooterBand() {
+        // find footer child divs that have background-color set (builder places the colored band here)
+        const candidates = Array.from(doc.querySelectorAll("footer > div, footer div"));
+        const bandEls = candidates.filter(d => /background-?color\s*:/.test((d.getAttribute("style") || "").toLowerCase()));
+        // fallback: if none found, take first footer child div
+        if (bandEls.length === 0) {
+          const f = doc.querySelector("footer > div");
+          if (f) bandEls.push(f);
+        }
+        function contrastText(hex) {
+          try {
+            const c = (hex || "").replace("#", "");
+            const r = parseInt(c.substr(0, 2), 16);
+            const g = parseInt(c.substr(2, 2), 16);
+            const b = parseInt(c.substr(4, 2), 16);
+            const lum = (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+            return lum > 0.55 ? "#111" : "#fff";
+          } catch (e) {
+            return "#fff";
+          }
+        }
+        bandEls.forEach(el => {
+          try {
+            el.style.backgroundColor = themeHex;
+            el.style.color = contrastText(themeHex);
+            // ensure inner footer anchors keep builder link color
+            el.querySelectorAll("a").forEach(a => {
+              a.style.color = "#0056a3";
+              a.style.textDecoration = "none";
+              a.style.fontWeight = "600";
+            });
+          } catch (e) {}
+        });
+      })();
+    } catch (e) {
+      console.warn("theme injection failed", e);
+    }
+
+    // Remove any existing footer and add the builder-style footer
+let oldFooter = doc.querySelector("footer");
+if (oldFooter) oldFooter.remove();
+
+const footer = doc.createElement("footer");
+footer.innerHTML = `
+  <p class="small-note">
+    Disclaimer : Stock market investments are subject to market risks. All information provided is for educational and informational purposes only and represents personal views. It is not investment advice. Clients may hold positions in mentioned stocks and receive additional real-time information. No guarantees on returns. Consult a financial advisor before investing.
+  </p>
+  <div style="background-color:#aa0365; color:#ffffff; text-align:center; padding:10px; font-size:14px; margin-top:10px;">
+    <!-- Optional: Add footer content or logos here -->
+  </div>
+`;
+doc.body.appendChild(footer);
+
+    // return serialized full document
+    let htmlStr = doc.documentElement.outerHTML;
+    return serializeDoc(parser.parseFromString(htmlStr, "text/html"));
+  }
+
+  async function waitForImages(node){
+    const imgs = node.querySelectorAll("img");
+    await Promise.all([...imgs].map(img=>{
+      if(img.complete) return;
+      return new Promise(res=>{ img.onload=res; img.onerror=res; });
+    }));
+  }
+
+  // disable editing inside a DOM node (used for the preview)
+  function disableEditingInNode(node){
+    if(!node) return;
+    try{
+      // force root/contenteditable off
+      node.setAttribute('contenteditable','false');
+      // Make contenteditable elements non-editable (including descendants)
+      node.querySelectorAll('[contenteditable]').forEach(el=>{
+        el.setAttribute('contenteditable','false');
+      });
+      // Disable form controls so they can't be edited/interacted with
+      node.querySelectorAll('input, textarea, select, button').forEach(el=>{
+        if(!el.hasAttribute('data-preview-disabled')){
+          if(el.disabled) el.setAttribute('data-preview-disabled','true');
+          else el.setAttribute('data-preview-disabled','false');
+        }
+        el.disabled = true;
+        el.tabIndex = -1;
+      });
+      // remove tabindex from any element that could receive focus
+      node.querySelectorAll('[tabindex]').forEach(el=>{
+        el.setAttribute('data-prev-tabindex', el.getAttribute('tabindex'));
+        el.tabIndex = -1;
+      });
+      // Remove spellcheck and inline event attributes
+      node.querySelectorAll('[spellcheck]').forEach(el=>el.spellcheck = false);
+      node.querySelectorAll('*').forEach(el=>{
+        if(el.hasAttribute('oninput')) el.removeAttribute('oninput');
+        if(el.hasAttribute('onchange')) el.removeAttribute('onchange');
+        if(el.hasAttribute('onclick')) el.removeAttribute('onclick');
+      });
+      // Stop propagation of key events on node (prevent editing via keyboard)
+      const stopKeys = e => {
+        const blocked = ['Backspace','Delete','Enter'];
+        if(blocked.includes(e.key) || (e.ctrlKey || e.metaKey) && ['x','v','c','a','z'].includes(e.key.toLowerCase())) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+      };
+      node.addEventListener('keydown', stopKeys, {capture:true});
+      node.addEventListener('keypress', stopKeys, {capture:true});
+      node.addEventListener('keyup', stopKeys, {capture:true});
+    }catch(e){
+      console.warn('disableEditingInNode failed', e);
+    }
+  }
+
+  // setup the overlay so interactions are blocked but scrolling works
+  (function setupOverlay(){
+    // make sure previewWrap is positioned (CSS already sets it, but ensure)
+    previewWrap.style.position = previewWrap.style.position || 'relative';
+    overlayEl.tabIndex = 0; // allow keyboard handling
+    let touchStartY = 0;
+    overlayEl.addEventListener('wheel', (e)=>{
+      // forward wheel scrolling to the wrap
+      previewWrap.scrollTop += e.deltaY;
+      e.preventDefault();
+    }, {passive:false});
+    overlayEl.addEventListener('touchstart', (e)=>{
+      touchStartY = e.touches[0]?.clientY || 0;
+    }, {passive:true});
+    overlayEl.addEventListener('touchmove', (e)=>{
+      const y = e.touches[0]?.clientY || 0;
+      const dy = touchStartY - y;
+      previewWrap.scrollTop += dy;
+      touchStartY = y;
+      e.preventDefault();
+    }, {passive:false});
+    overlayEl.addEventListener('keydown', (e)=>{
+      // forward common navigation keys
+      const line = 40;
+      const page = previewWrap.clientHeight - 40;
+      switch(e.key){
+        case 'ArrowDown': previewWrap.scrollTop += line; e.preventDefault(); break;
+        case 'ArrowUp': previewWrap.scrollTop -= line; e.preventDefault(); break;
+        case 'PageDown': previewWrap.scrollTop += page; e.preventDefault(); break;
+        case 'PageUp': previewWrap.scrollTop -= page; e.preventDefault(); break;
+        case ' ':
+          previewWrap.scrollTop += page; e.preventDefault(); break;
+        case 'Home': previewWrap.scrollTop = 0; e.preventDefault(); break;
+        case 'End': previewWrap.scrollTop = previewWrap.scrollHeight; e.preventDefault(); break;
+        default:
+          // block editing-related combos
+          if((e.ctrlKey||e.metaKey) && ['x','v','c','a','z'].includes(e.key.toLowerCase())){
+            e.preventDefault();
+          }
+      }
+    });
+    // prevent focus from reaching elements inside preview (keep focus on overlay)
+    overlayEl.addEventListener('focus', ()=>{ /* noop */ });
+  })();
+
+  async function renderPreview(idx) {
+    if (logoStates.length === 0) {
+      previewEl.innerHTML = baseReportHTML;
+      disableEditingInNode(previewEl);
+      // ensure overlay present
+      overlayEl.style.display = 'block';
+      return;
+    }
+    const logo = logoStates[idx];
+    const {website} = extractWebsiteAndColor(logo.label);
+    const htmlOut = applyThemeAndBrand({
+      html: baseReportHTML,
+      logoDataURL: logo.dataURL,
+      themeHex: logo.color,
+      website,
+      footerText: logo.label   // <--- pass filename/label into preview
+    });
+    previewEl.innerHTML = htmlOut;
+    // ensure preview is read-only: remove contenteditable, disable form controls, remove event handlers
+    previewEl.classList.add('readonly');
+    previewEl.setAttribute('aria-readonly','true');
+    disableEditingInNode(previewEl);
+    // keep overlay visible to block interactions; it will forward scroll/keyboard to the wrap
+    overlayEl.style.display = 'block';
+    // ensure overlay is focused so keyboard shortcuts scroll the preview rather than editing anything
+    try{ overlayEl.focus({preventScroll:true}); }catch(e){}
+  }
+
+  async function handleLogoInput() {
+    logoStates = [];
+    thumbs.innerHTML = '';
+    const files = Array.from(logoInput.files);
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i];
+      const dataURL = await fileToDataURL(file);
+      const { color } = extractWebsiteAndColor(file.name);
+      logoStates.push({
+        file,
+        dataURL,
+        color,
+        label: file.name
+      });
+    }
+    renderThumbs();
+    selectedLogoIdx = 0;
+    renderPreview(selectedLogoIdx);
+  }
+
+  function renderThumbs() {
+    thumbs.innerHTML = '';
+    logoStates.forEach((logo, idx) => {
+      const thumbDiv = document.createElement('div');
+      thumbDiv.className = 'thumb';
+      thumbDiv.style.position = 'relative';
+      thumbDiv.style.border = idx === selectedLogoIdx ? '2px solid var(--theme)' : '1px solid #eee';
+      thumbDiv.style.cursor = 'pointer';
+      thumbDiv.innerHTML = `
+        <img src="${logo.dataURL}" style="max-width:80px;max-height:80px;">
+        <input type="color" value="${logo.color}" style="position:absolute;bottom:6px;left:6px;width:28px;height:28px;border-radius:6px;border:1px solid #ccc;box-shadow:0 1px 4px #0001;">
+      `;
+      // Select logo on click
+      thumbDiv.addEventListener('click', () => {
+        selectedLogoIdx = idx;
+        renderThumbs();
+        renderPreview(selectedLogoIdx);
+      });
+      // Color picker change
+      const colorInput = thumbDiv.querySelector('input[type="color"]');
+      colorInput.addEventListener('input', (e) => {
+        logoStates[idx].color = e.target.value;
+        selectedLogoIdx = idx;
+        renderThumbs();
+        renderPreview(selectedLogoIdx);
+      });
+      thumbs.appendChild(thumbDiv);
+    });
+  }
+
+  logoInput.addEventListener('change', handleLogoInput);
+
+  async function collectLogos(){
+    const items=[];
+    // Local uploads
+    for(let i=0;i<logoStates.length;i++){
+      items.push({
+        label: logoStates[i].label,
+        dataURL: logoStates[i].dataURL,
+        customColor: logoStates[i].color
+      });
+    }
+    // Remote URLs
+    const urls = logoUrls.value.split(/\n/).map(s=>s.trim()).filter(Boolean);
+    for(const url of urls){
+      try{
+        const dataURL = await urlToDataURL(url);
+        const { color } = extractWebsiteAndColor(url);
+        items.push({label:url,dataURL,customColor:color});
+      }catch(e){
+        console.warn("Failed to load URL", url, e);
+      }
+    }
+    return items;
+  }
+
+  async function renderPNGFromHTML(htmlString){
+    sandbox.innerHTML = ""; 
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = htmlString;
+    sandbox.appendChild(wrapper);
+    let node = wrapper.querySelector("#report") || wrapper;
+    node.style.width="900px"; 
+    node.style.background="#fff";
+    node.style.padding = "25px";  
+    const logoImg = node.querySelector("header img") || node.querySelector(".logo img");
+    if(logoImg){
+      logoImg.style.width = "360px";       
+      logoImg.style.height = "auto";       
+      logoImg.style.maxHeight = "180px";   
+      logoImg.style.objectFit = "contain";
+    }
+    // Ensure render sandbox content is non-editable too (so contenteditable/form fields don't influence rendering)
+    disableEditingInNode(node);
+    await waitForImages(node);
+    await sleep(200); 
+    const dataUrl = await htmlToImage.toPng(node,{pixelRatio:2,backgroundColor:"#fff",cacheBust:true});
+    const pngBlob = await (await fetch(dataUrl)).blob();
+    return { pngBlob, dataUrl };
+  }
+
+  function updateStatus(msg){ statusEl.textContent=msg; }
+
+  generateBtn.addEventListener("click", async ()=>{
+    generateBtn.disabled=true;
+    try{
+      updateStatus("Collecting logos...");
+      const logos = await collectLogos();
+      if(!logos.length){ updateStatus("No logos selected"); generateBtn.disabled=false; return; }
+
+      const zip = new JSZip();
+      const folder = zip.folder("morning-report");
+
+      for(let i=0;i<logos.length;i++){
+        const item = logos[i];
+        updateStatus(`Processing ${i+1}/${logos.length} — ${item.label}`);
+        const {website, color} = extractWebsiteAndColor(item.label);
+        const themeColor = item.customColor || color;
+        // pass item.label as footerText so saved HTML/PDF/PNG include the filename as footer/description
+        const htmlOut = applyThemeAndBrand({html: baseReportHTML, logoDataURL:item.dataURL, themeHex:themeColor, website, footerText: item.label});
+        const safeBase = website.replace(/[^a-z0-9\-\.]/gi,'_');
+        const { pngBlob, dataUrl } = await renderPNGFromHTML(htmlOut);
+        folder.file(`${safeBase}.html`, htmlOut);
+        folder.file(`${safeBase}.png`, pngBlob);
+
+        try{
+          updateStatus(`Rendering PDF for ${safeBase}...`);
+          const img = new Image();
+          img.src = dataUrl;
+          await new Promise(res=>{ img.onload = res; img.onerror = res; });
+          const { jsPDF } = window.jspdf || {};
+          if(jsPDF){
+            const doc = new jsPDF({ unit: 'px', format: [img.width, img.height] });
+            doc.addImage(dataUrl, 'PNG', 0, 0, img.width, img.height);
+            const pdfBlob = doc.output('blob');
+            folder.file(`${safeBase}.pdf`, pdfBlob);
+          } else {
+            console.warn("jsPDF not available; skipping PDF generation for", safeBase);
+          }
+        }catch(e){
+          console.warn("PDF generation failed for", safeBase, e);
+        }
+      }      updateStatus("Bundling ZIP...");      const zipBlob = await zip.generateAsync({type:"blob"});      saveAs(zipBlob, `MorningReport_${new Date().toISOString().slice(0,10)}.zip`);      updateStatus("Done!");    }catch(e){ console.error(e); updateStatus("Error: "+e.message); }    finally{ generateBtn.disabled=false; }
+  });
+
+  // initialize: make overlay active and disable any editing in the initial preview
+  disableEditingInNode(previewEl);
+  overlayEl.style.display = 'block';
+
+})();
+</script>
+</body>
+</html>
+<!-- ...existing code... -->
