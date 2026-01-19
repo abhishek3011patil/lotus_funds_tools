@@ -14,12 +14,12 @@
     font-family: 'Inter', sans-serif;
     background: #fff;
     color: #000;
-    max-width: 900px;
     margin: auto;
     padding: 20px;
     line-height: 1.5;
     
   }
+  
   [contenteditable="true"] {
     cursor: text;
     transition: background 0.2s;
@@ -44,13 +44,8 @@
     font-weight: 600;
     cursor: pointer;
   }
-</style>
-</head>
-<body>
-
-<div id="report">
-
-    <style>header {
+  
+  header {
     text-align: center;
     border-bottom: 2px solid #eee;
   }
@@ -74,22 +69,23 @@
             font-weight: bold;
             color: #000000;
         }
-  h1 {
-    font-size: 1.8rem;
-    font-weight: 800;
-    margin: 5px 0;
-  }
+
   h2 {
     font-size: 1.3rem;
     font-weight: 700;
     margin: 20px 0 10px;
     padding-bottom: 5px;
   }
+    h3 {
+    font-size: 1.2rem;
+    font-weight: 700;
+  }
   .date {
     font-weight: 600;
     font-size: 1.1rem;
     margin: 5px 0;
   }
+  
   table {
     width: 100%;
     border-collapse: collapse;
@@ -97,12 +93,12 @@
   }
   
 li::marker {
-  color: white;
+  color: black;
 }
 
   th, td {
     padding: 10px;
-    text-align: center;
+    text-align: left;
     border: 1px solid #ddd;
     font-size: 0.95rem;
   }
@@ -123,20 +119,12 @@ li::marker {
     color: #757575;
     font-weight: 600;
   }
- .highlight {
-  background: #f3f3f3 !important;
-  color: #000 !important;
-  padding: 10px;
+.highlight {
+  background: #fafafa;
+  color: black;
+  padding: 15px;
   border-radius: 6px;
-  margin-bottom: 20px;
-}
-.highlight ul,
-.highlight ol {
-  margin: 0;
-  padding-left: 1.2em;
-}
-.highlight li::marker {
-  color: #000 !important;
+  border: 1px solid #ddd;
 }
   .small-note {
     font-size: 0.85rem;
@@ -150,6 +138,10 @@ li::marker {
     color: #aa0365;
   }
 </style>
+</head>
+<body>
+<div id="report">
+
 <header>
   <img src="https://iili.io/KAmsRLb.png" width="900px" alt="Logo"> 
   <!-- Report Header with Title and Date inline -->
@@ -158,7 +150,6 @@ li::marker {
 <div class="report-date" contenteditable="true">Monday, September 8th 2025</div>
 </div>
 </header>
-
 <table>
   <tr>
     <th>INDICES</th>
@@ -171,7 +162,7 @@ li::marker {
     <th>TREND</th>
   </tr>
   <tr>
-    <td>NIFTY</td>
+    <td><b>NIFTY</b></td>
     <td contenteditable="true">24632</td>
     <td contenteditable="true">24409</td>
     <td contenteditable="true">24857</td>
@@ -181,7 +172,7 @@ li::marker {
     <td contenteditable="true" class="positive">Positive</td>
   </tr>
   <tr>
-    <td>BANK-NIFTY</td>
+    <td><b>BANK NIFTY</b></td>
     <td contenteditable="true">55432</td>
     <td contenteditable="true">54850</td>
     <td contenteditable="true">56000</td>
@@ -192,24 +183,24 @@ li::marker {
   </tr>
 </table>
 
-<h2>Preferred Trade</h2>
+
 <div class="highlight">
+<h3>Preferred Trade :</h3>
   <ul style="list-style-type:disc">
     <li contenteditable="true">NIFTY (CMP 24632): Buy at CMP. Stop at 24261. Targets 24750/24857. Aggressive targets at 25000-25300 zone.</li>
     <br>
 	<li contenteditable="true">BANKNIFTY (CMP 55432): Buy at CMP. Stop at 54501. Targets 55750/56100. Aggressive targets at 56700 mark.</li>
   </ul>
-</div>
 
-<!-- Option Call Box -->
-<h2>Option Call</h2>
-<div class="highlight">
+<h3>Option Call :</h3>
   <ul style="list-style-type:disc">
     <li contenteditable="true">BUY NIFTY 16th September PE Strike Price 24600 at CMP 77.70. Maximum Loss: ₹ 5827.50. Profit: Unlimited. Stop: Exit Put Option if NIFTY September FUTURES moves above 24891. Analyst's Remark: Profit-taking likely amidst long unwinding.</li>
   </ul>
 </div>
 
-<h2>All About Stocks</h2>
+
+
+<h2>All About Stocks :</h2>
 <table>
   <tr>
     <th>STOCKS</th>
@@ -253,7 +244,7 @@ li::marker {
   </tr>
 </table>
 
-<h2>Medium Term Trades</h2>
+<h2>Medium Term Trades :</h2>
 <table>
   <tr>
     <th>STOCKS</th>
@@ -297,23 +288,28 @@ li::marker {
   </tr>
 </table>
 
-<h2>Technical Strategy</h2>
+
+<h2>Stock In Spotlight :</h2>
 <table>
   <tr>
     <th>STOCKS</th>
+	<th>CMP</th>
     <th>ACTION</th>
     <th>TARGET</th>
     <th>SUPPORT</th>
     <th>RESIST</th>
     <th>HOLDING PERIOD</th>
+	<th>RATIONALE</th>
   </tr>
   <tr>
-    <td contenteditable="true">M&M CMP 3265</td>
-    <td contenteditable="true" class="positive">Buy</td>
+    <td contenteditable="true">M&M</td>
+	<td contenteditable="true">3265</td>
+    <td contenteditable="true">Buy</td>
     <td contenteditable="true">3321</td>
     <td contenteditable="true">3061/2761</td>
     <td contenteditable="true">3321/3750</td>
-    <td contenteditable="true">9-12 months. Breaking out from a higher consolidation zone on all time-frames.</td>
+    <td contenteditable="true">9-12 months</td>
+	<td contenteditable="true">Breaking out from a higher consolidation zone on all time-frames.</td>
   </tr>
 </table>
 
@@ -334,72 +330,51 @@ document.getElementById("submitBtn").addEventListener("click", () => {
   window.location.href = "logo-theme.html";
 });
 
-// --- Added: live update of trend/bias classes when editing (restricted to TREND/BIAS columns) ---
+// Auto-apply positive / negative / neutral based on the word you type
 (function(){
-  const report = document.getElementById('report');
+  const report = document.getElementById("report");
 
-  function normalize(s){ return (s||'').trim().toLowerCase(); }
+  function normalize(txt){
+    return (txt || "").trim().toLowerCase();
+  }
+
+  function isTrendOrBiasCell(cell){
+    if (!cell) return false;
+    const row = cell.closest("tr");
+    if (!row) return false;
+    const table = row.closest("table");
+    if (!table) return false;
+
+    const headerRow = Array.from(table.querySelectorAll("tr")).find(r => r.querySelectorAll("th").length > 0);
+    if (!headerRow) return false;
+
+    const headers = Array.from(headerRow.querySelectorAll("th")).map(h => normalize(h.textContent));
+    const idx = Array.from(row.querySelectorAll("td,th")).indexOf(cell);
+    const targetIdx = headers.findIndex(h => h === "trend" || h === "bias");
+    return targetIdx !== -1 && idx === targetIdx;
+  }
 
   function updateTrendClass(el){
-    if(!el) return;
+    if (!el || !isTrendOrBiasCell(el)) return;
     const txt = normalize(el.textContent);
-    el.classList.remove('positive','negative','neutral');
-    if(/\bneutral\b/.test(txt)) el.classList.add('neutral');
-    else if(/\bpositive\b/.test(txt)) el.classList.add('positive');
-    else if(/\bnegative\b/.test(txt)) el.classList.add('negative');
+    el.classList.remove("positive","negative","neutral");
+    if (/\bneutral\b/.test(txt)) el.classList.add("neutral");
+    else if (/\bpositive\b/.test(txt)) el.classList.add("positive");
+    else if (/\bnegative\b/.test(txt)) el.classList.add("negative");
   }
 
-  // returns true if the element is a cell located in the column headed 'trend' or 'bias'
-  function isTrendOrBiasCell(cell){
-    if(!cell) return false;
-    const row = cell.closest('tr');
-    if(!row) return false;
-    const table = row.closest('table');
-    if(!table) return false;
-    // find the header row (first tr with th)
-    const headerRow = Array.from(table.querySelectorAll('tr')).find(r => r.querySelectorAll('th').length>0);
-    if(!headerRow) return false;
-    const headers = Array.from(headerRow.querySelectorAll('th')).map(h=> normalize(h.textContent));
-    const targetIdx = headers.findIndex(h => h === 'trend' || h === 'bias');
-    if(targetIdx === -1) return false;
-    // find this cell's index among its siblings (td/th)
-    const cells = Array.from(row.querySelectorAll('td,th'));
-    const idx = cells.indexOf(cell);
-    return idx === targetIdx;
-  }
+  // initial scan
+  document.querySelectorAll("[contenteditable='true']").forEach(updateTrendClass);
 
-  // initial scan: only update editable nodes under TREND/BIAS columns
-  document.querySelectorAll('[contenteditable="true"]').forEach(n=>{
-    if(isTrendOrBiasCell(n)) updateTrendClass(n);
-  });
-
-  // event handlers: only update if the target is in TREND/BIAS column
-  report.addEventListener('input', (e) => {
+  // live updates
+  report.addEventListener("input", (e) => {
     let target = e.target;
-    if(!target) return;
-    if(!(target.matches && target.matches('[contenteditable="true"]'))){
-      target = target.closest && target.closest('[contenteditable="true"]');
+    if (!target || !(target.matches && target.matches("[contenteditable='true']"))) {
+      target = target.closest && target.closest("[contenteditable='true']");
     }
-    if(target && isTrendOrBiasCell(target)) updateTrendClass(target);
+    if (target) updateTrendClass(target);
   }, true);
-
-  report.addEventListener('blur', (e) => {
-    let target = e.target;
-    if(!(target && target.matches && target.matches('[contenteditable="true"]'))){
-      target = target && target.closest && target.closest('[contenteditable="true"]');
-    }
-    if(target && isTrendOrBiasCell(target)) updateTrendClass(target);
-  }, true);
-
-  report.addEventListener('paste', (e) => {
-    const target = e.target && (e.target.matches && e.target.matches('[contenteditable="true"]') ? e.target : e.target.closest && e.target.closest('[contenteditable="true"]'));
-    if(!target) return;
-    if(!isTrendOrBiasCell(target)) return;
-    setTimeout(()=> updateTrendClass(target), 50);
-  }, true);
-
 })();
 </script>
-
 </body>
 </html>

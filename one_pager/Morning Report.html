@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Morning Report — Builder</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+<style>
+body {
+  font-family: 'Inter', sans-serif;
+  max-width: 900px;
+  margin: auto;
+  padding: 20px;
+  background: #fff;
+  color: #000;
+  line-height: 1.45;
+}
+
+/* EDITABLE */
+[contenteditable="true"] { cursor: text; }
+[contenteditable="true"]:hover {
+  outline: 1px dashed #aaa;
+  background: #e8ebf9;
+}
+[contenteditable="true"]:focus {
+  outline: 2px solid #ffb300;
+  background: #fff2a8;
+}
+
+/* HEADER */
+header {
+  text-align: center;
+  border-bottom: 2px solid #ddd;
+  margin-bottom: 18px;
+}
+header img {
+  width: 900px;
+  margin-bottom: 8px;
+}
+.report-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.report-title {
+  font-size: 36px;
+  font-weight: 700;
+}
+.report-date {
+  font-size: 15px;
+  font-weight: 650;
+}
+
+/* COLORS */
+.positive { color: #00C853; font-weight: 600; }
+.negative { color: #D50000; font-weight: 600; }
+.neutral  { color: #757575; font-weight: 600; }
+
+/* ===== GRIDS ===== */
+.index-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+.stock-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+/* ===== GENERIC CARD ===== */
+.card {
+  background: #fafafa;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 12.5px;
+}
+
+/* CARD HEADER */
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+}
+.card-trend {
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+/* MINI TABLE */
+.mini-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 6px;
+}
+.mini-table td {
+  padding: 4px 6px;
+  border-bottom: 1px solid #ddd;
+  font-size: 12px;
+}
+
+/* TRADE NOTE */
+.trade-note {
+  font-size: 12.3px;
+  line-height: 1.45;
+  text-align: center;
+}
+
+/* OPTION / SPOTLIGHT BOX */
+.highlight, .spotlight-box {
+  background: #fafafa;
+  padding: 14px;
+  border-radius: 6px;
+  border: 1px solid #ddd;
+  margin-bottom: 18px;
+  font-size: 13px;
+}
+
+/* SPOTLIGHT */
+.spotlight-title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+.spotlight-title span {
+  color: #aa0365;
+}
+
+.spotlight-grid {
+  display: grid;
+  grid-template-columns: 40% 60%;
+  gap: 14px;
+}
+
+.spotlight-chart {
+  border: 1px solid #ddd;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.spotlight-content {
+  padding: 0px 16px 6px 0px;
+}
+
+.spotlight-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8px;
+}
+.spotlight-table td {
+  padding: 6px 8px;
+  border: 1px solid #ddd;
+  font-size: 12.5px;
+}
+
+.spotlight-note {
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+/* TABLES BELOW */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 18px;
+}
+th, td {
+  padding: 8px;
+  border: 1px solid #ddd;
+  font-size: 0.9rem;
+}
+th {
+  background: #aa0365;
+  color: #fff;
+}
+
+footer {
+  margin-top: 18px;
+  text-align: center;
+  font-size: 0.85rem;
+}
+
+/* RESPONSIVE */
+@media(max-width: 900px) {
+  .index-card-grid,
+  .stock-card-grid,
+  .spotlight-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <img src="https://iili.io/KAmsRLb.png" alt="Logo">
+  <div class="report-header">
+    <div class="report-title">The Morning Report</div>
+    <div class="report-date" contenteditable="true">Monday, September 8th 2025</div>
+  </div>
+</header>
+
+<!-- INDEX CARDS -->
+<div class="index-card-grid">
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">NIFTY (CMP : <span contenteditable="true">24632</span>)</div>
+      <div class="card-trend positive" contenteditable="true">Positive</div>
+    </div>
+    <table class="mini-table">
+      <tr><td>Support</td><td contenteditable="true">24409</td><td>21 DMA</td><td contenteditable="true">24857</td></tr>
+      <tr><td>Resistance</td><td contenteditable="true">24775</td><td>50 DMA</td><td contenteditable="true">24857</td></tr>
+      <tr><td>Range</td><td contenteditable="true">24550 – 24901</td><td>200 DMA</td><td contenteditable="true">24047</td></tr>
+    </table>
+    <div class="trade-note" contenteditable="true">
+      Buy at CMP. Stop 24261. Targets 24750 / 24857.
+      Aggressive targets 25000–25300.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">BANK NIFTY (CMP : <span contenteditable="true">55432</span>)</div>
+      <div class="card-trend positive" contenteditable="true">Positive</div>
+    </div>
+    <table class="mini-table">
+      <tr><td>Support</td><td contenteditable="true">54850</td><td>21 DMA</td><td contenteditable="true">55984</td></tr>
+      <tr><td>Resistance</td><td contenteditable="true">56000</td><td>50 DMA</td><td contenteditable="true">56000</td></tr>
+      <tr><td>Range</td><td contenteditable="true">54920 – 55820</td><td>200 DMA</td><td contenteditable="true">52760</td></tr>
+    </table>
+    <div class="trade-note" contenteditable="true">
+      Buy at CMP. Stop 54501. Targets 55750 / 56100.
+      Aggressive target 56700.
+    </div>
+  </div>
+
+</div>
+
+<!-- OPTION CALL -->
+<div class="highlight">
+<strong>Option Call :</strong>
+<ul>
+<li contenteditable="true">
+BUY NIFTY 16th September PE 24600 at CMP 77.70.
+Maximum Loss ₹5827.50. Profit Unlimited.
+Exit if NIFTY Futures move above 24891.
+</li>
+</ul>
+</div>
+
+<!-- STOCK IN SPOTLIGHT -->
+<div class="spotlight-box">
+
+  <div class="spotlight-title">
+    Stock in Spotlight : <span contenteditable="true">M&amp;M</span>
+  </div>
+
+  <div class="spotlight-grid">
+
+    <!-- LEFT : CHART -->
+    <div class="spotlight-chart">
+      <img 
+        src="C:\Users\diksh\Downloads\M&M_Daily_13-01-2026.png"
+        alt="Chart"
+        style="max-width:100%;height:auto;"
+      >
+    </div>
+
+    <!-- RIGHT : CONTENT (FIXED PADDING) -->
+    <div class="spotlight-content">
+
+      <table class="spotlight-table">
+        <tr>
+          <td><b>CMP</b></td>
+          <td contenteditable="true">3265</td>
+          <td><b>Action</b></td>
+          <td contenteditable="true">Buy</td>
+        </tr>
+        <tr>
+          <td><b>Target</b></td>
+          <td contenteditable="true">3321 / 3750</td>
+          <td><b>Holding Period</b></td>
+          <td contenteditable="true">9–12 months</td>
+        </tr>
+        <tr>
+          <td><b>Support</b></td>
+          <td contenteditable="true">3061 / 2761</td>
+          <td><b>Resistance</b></td>
+          <td contenteditable="true">3321</td>
+        </tr>
+      </table>
+
+      <div class="spotlight-note" contenteditable="true">
+        The stock is breaking out from a higher consolidation zone on daily,
+        weekly and monthly timeframes with strong volume confirmation.
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- ALL ABOUT STOCKS -->
+<h3>All About Stocks :</h3>
+
+<div class="stock-card-grid">
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Eternal (CMP : <b contenteditable="true">318</b>)</div>
+      <div class="card-trend positive" contenteditable="true">Positive</div>
+    </div>
+    <table class="mini-table">
+      <tr><td>Support</td><td contenteditable="true">313</td><td>Resistance</td><td contenteditable="true">333</td></tr>
+      <tr><td>21 DMA</td><td contenteditable="true">300</td><td>200 DMA</td><td contenteditable="true">250</td></tr>
+    </table>
+    <div class="trade-note" contenteditable="true">
+      Buy at CMP. Stop 303. Targets 321 / 333. Aggressive 347.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">Maruti (CMP : <b contenteditable="true">12936</b>)</div>
+      <div class="card-trend positive" contenteditable="true">Positive</div>
+    </div>
+    <table class="mini-table">
+      <tr><td>Support</td><td contenteditable="true">12511</td><td>Resistance</td><td contenteditable="true">13501</td></tr>
+      <tr><td>21 DMA</td><td contenteditable="true">12551</td><td>200 DMA</td><td contenteditable="true">12004</td></tr>
+    </table>
+    <div class="trade-note" contenteditable="true">
+      Buy at CMP. Stop 12331. Targets 13287 / 13501. Aggressive 14151.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">SBIN (CMP : <b contenteditable="true">827</b>)</div>
+      <div class="card-trend positive" contenteditable="true">Positive</div>
+    </div>
+    <table class="mini-table">
+      <tr><td>Support</td><td contenteditable="true">808</td><td>Resistance</td><td contenteditable="true">843</td></tr>
+      <tr><td>21 DMA</td><td contenteditable="true">811</td><td>200 DMA</td><td contenteditable="true">791</td></tr>
+    </table>
+    <div class="trade-note" contenteditable="true">
+      Buy at CMP. Stop 805. Targets 843 / 857. Aggressive 875.
+    </div>
+  </div>
+
+</div>
+
+<!-- MEDIUM TERM -->
+<h3>Medium Term Trades :</h3>
+
+<div class="stock-card-grid">
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">CIPLA (CMP : <b contenteditable="true">1564</b>)</div>
+      <div class="card-trend positive" contenteditable="true">Positive</div>
+    </div>
+    <table class="mini-table">
+      <tr><td>Support</td><td contenteditable="true">1409</td><td>Resistance</td><td contenteditable="true">1702</td></tr>
+      <tr><td>21 DMA</td><td contenteditable="true">1514</td><td>200 DMA</td><td contenteditable="true">1488</td></tr>
+    </table>
+    <div class="trade-note" contenteditable="true">
+      Buy at CMP. Targets 1595 / 1702 and then 1851. Stop above 1451.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">NETWEB (CMP : <b contenteditable="true">2125</b>)</div>
+      <div class="card-trend positive" contenteditable="true">Positive</div>
+    </div>
+    <table class="mini-table">
+      <tr><td>Support</td><td contenteditable="true">1451</td><td>Resistance</td><td contenteditable="true">2551</td></tr>
+      <tr><td>21 DMA</td><td contenteditable="true">2041</td><td>200 DMA</td><td contenteditable="true">2026</td></tr>
+    </table>
+    <div class="trade-note" contenteditable="true">
+      Buy at CMP. Targets 2330 / 2551 and then 3000. Stop above 1451.
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">OSWAL PUMPS (CMP : <b contenteditable="true">794</b>)</div>
+      <div class="card-trend positive" contenteditable="true">Positive</div>
+    </div>
+    <table class="mini-table">
+      <tr><td>Support</td><td contenteditable="true">660</td><td>Resistance</td><td contenteditable="true">1000</td></tr>
+      <tr><td>21 DMA</td><td contenteditable="true">749</td><td>200 DMA</td><td contenteditable="true">-</td></tr>
+    </table>
+    <div class="trade-note" contenteditable="true">
+      Buy at CMP. Targets 881 / 1000 and then 1250. Stop above 669.
+    </div>
+  </div>
+
+</div>
+<hr style="height: 2px; background-color: #ddd; border: none;">
+
+<footer>
+  <p style="font-size: 10px;" contenteditable="true" class="small-note">
+    Disclaimer : Stock market investments are subject to market risks. All information provided is for educational and informational purposes only and represents personal views. It is not investment advice. Clients may hold positions in mentioned stocks and receive additional real-time information. No guarantees on returns. Consult a financial advisor before investing.
+  </p>
+  <div  style="background-color:#aa0365; color:#ffffff; text-align:center; padding:10px; font-size:14px; margin-top:10px;">
+  </div>
+</footer>
+
+<script>
+  // Auto-apply positive / negative / neutral classes based on the word you type
+  (function () {
+    function normalize(txt) {
+      return (txt || "").trim().toLowerCase();
+    }
+
+    function updateTrend(el) {
+      if (!el) return;
+      const txt = normalize(el.textContent);
+      el.classList.remove("positive", "negative", "neutral");
+      if (/\bneutral\b/.test(txt)) el.classList.add("neutral");
+      else if (/\bpositive\b/.test(txt)) el.classList.add("positive");
+      else if (/\bnegative\b/.test(txt)) el.classList.add("negative");
+    }
+
+    // initial scan
+    document.querySelectorAll(".card-trend[contenteditable='true']").forEach(updateTrend);
+
+    // live updates while you type
+    document.addEventListener(
+      "input",
+      (e) => {
+        const el = e.target.closest && e.target.closest(".card-trend[contenteditable='true']");
+        if (el) updateTrend(el);
+      },
+      true
+    );
+  })();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FII DII Report — Builder</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --card:#ffffff;
+    --muted:#666666;
+    --pos:#16a34a;   /* positive = green */
+    --neg:#ef4444;   /* negative = red */
+    --neu:#757575;   /* neutral  = grey */
+  }
+  body {
+    font-family: 'Inter', sans-serif;
+    margin: auto;
+    padding: 20px;
+    font-family: 'Inter', sans-serif;
+    background: #fff;
+    color: #000;
+    max-width: 900px;
+    margin: auto;
+    padding: 20px;
+    line-height: 1.5;
+    
+  }
+  
+  [contenteditable="true"] {
+    cursor: text;
+    transition: background 0.2s;
+  }
+
+  /* Word-based trend helpers (optional: use class="positive|negative|neutral") */
+  .positive { color: var(--pos); font-weight: 600; }
+  .negative { color: var(--neg); font-weight: 600; }
+  .neutral  { color: var(--neu); font-weight: 600; }
+  [contenteditable="true"]:hover {
+    outline: 1px dashed #aaa;
+    background: #95a7e1;
+    color: black;
+  }
+  [contenteditable="true"]:focus {
+    outline: 2px solid #ffb300;
+    background: #fff2a8;
+    color: black;
+  }
+  button {
+    margin-top: 20px;
+    background: #aa0365;
+    color: #fff;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  
+  header {
+    text-align: center;
+    border-bottom: 2px solid #eee;
+  }
+  header img {
+    max-height: 900x;
+	margin-bottom: 10px;
+  }
+          .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .report-title {
+            font-size: 40px;
+            font-weight: 800;
+            color: #000000;
+        }
+        .report-date {
+            font-size: 16px;
+            font-weight: bold;
+            color: #000000;
+        }
+
+    h3 {
+    font-size: 1.3rem;
+    font-weight: 700;
+  }
+
+    .grid{
+    display:grid; grid-template-columns:repeat(2,1fr);
+    gap:12px; padding:18px;
+  }
+  @media (max-width:640px){ .grid{ grid-template-columns:1fr } }
+  .card{
+    border:1px solid #e5e7eb;
+    border-radius:6px; padding:18px 18px; background:#ffffff;
+  }
+  .card h3{
+    margin:0 0 10px 0; font-size:18px; text-transform:uppercase;
+    color:#1a1a1a;
+  }
+
+    .row{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:4px 10px;
+    background:#fff;
+  }
+  .row:last-child{ margin-bottom:0 }
+  .label{ font-weight:600; color:var(--text); }
+  .val{ font-variant-numeric:tabular-nums; font-weight:600; }
+  .pos{ color:var(--pos) }
+  .neg{ color:var(--neg) }
+.highlight {
+  background: #fafafa;
+  color: black;
+  border: 1px solid #ddd;
+}
+  .small-note {
+    font-size: 0.85rem;
+    color: #666;
+    margin-top: 10px;
+  }
+  footer {
+    margin-top: 20px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #aa0365;
+  }
+</style>
+</head>
+
+
+<header>
+  <img src="https://iili.io/KAmsRLb.png" width="900px" alt="Logo"> 
+  <!-- Report Header with Title and Date inline -->
+<div class="report-header">
+<div class="report-title">FII / DII Activity</div>
+<div class="report-date" contenteditable="true">Tuesday, November 4th 2025</div>
+</div>
+</header>
+<body>
+ <img src="https://www.regentfurniture.co.za/wp-content/uploads/2016/07/Insert-Image-Here.png" alt="Title Image" align="center" width="900px" height="300px">
+ <div style="background-color:#aa0365;color:#ffffff;text-align:center;padding:10px 10px;font-size:22px;font-weight:bold;text-transform: uppercase;">FII'S continue to sell.</div>
+
+<div class="highlight"> 
+<section class="grid">
+	  <div class="card">
+        <h3>Today</h3>
+        <div class="row">
+          <div class="label">FII Cash</div>
+          <div class="val auto-color">+221.1 Cr.</div>
+        </div>
+        <div class="row">
+          <div class="label">DII Cash</div>
+          <div class="val auto-color">+591.3 Cr.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Week till Date</h3>
+        <div class="row">
+          <div class="label">FII Cash</div>
+          <div class="val auto-color">+593.2 Cr.</div>
+        </div>
+        <div class="row">
+          <div class="label">DII Cash</div>
+          <div class="val auto-color">+8,844.4 Cr.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Month till Date</h3>
+        <div class="row">
+          <div class="label">FII Cash</div>
+          <div class="val auto-color">-4,958.1 Cr.</div>
+        </div>
+        <div class="row">
+          <div class="label">DII Cash</div>
+          <div class="val auto-color">+8,846.2 Cr.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Year till Date</h3>
+        <div class="row">
+          <div class="label">FII Cash</div>
+          <div class="val auto-color">+14,835.6 Cr.</div>
+        </div>
+        <div class="row">
+          <div class="label">DII Cash</div>
+          <div class="val auto-color">+1,77,389.6 Cr.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+<div style="background-color:#aa0365;color:#ffffff;text-align:center;padding:10px 10px;font-size:20px;font-weight:bold;text-transform: uppercase;">Gift Nifty at 20:16 (25293, -112)</div>
+<footer>
+  <p contenteditable="true" class="small-note">
+    Disclaimer : Stock market investments are subject to market risks. All information provided is for educational and informational purposes only and represents personal views. It is not investment advice. Clients may hold positions in mentioned stocks and receive additional real-time information. No guarantees on returns. Consult a financial advisor before investing.
+  </p>
+  <div  style="background-color:#aa0365; color:#ffffff; text-align:center; padding:10px; font-size:14px; margin-top:10px;">
+  </div>
+</footer>
+</div>
+
+<button id="submitBtn">Submit & Continue</button>
+<script>
+  // Auto color +/- numbers
+  (function(){
+    const els = document.querySelectorAll('.auto-color');
+    els.forEach(el=>{
+      const txt = el.textContent.trim();
+      const num = parseFloat((txt.match(/[-+]?[\d,.]+/)||['0'])[0].replace(/,/g,''));
+      if (isNaN(num)) return;
+      el.classList.add(num < 0 ? 'neg' : 'pos');
+    });
+  })();
+</script>
+<script>
+
+
+document.getElementById("submitBtn").addEventListener("click", () => {
+  localStorage.setItem("reportHTML", document.getElementById("report").innerHTML);
+  window.location.href = "logo-theme.html";
+});
+</script>
+</body>
+</html>
