@@ -325,9 +325,10 @@ li::marker {
 <button id="submitBtn">Submit & Continue</button>
 
 <script>
-document.getElementById("submitBtn").addEventListener("click", () => {
-  localStorage.setItem("reportHTML", document.getElementById("report").innerHTML);
-  window.location.href = "logo-theme.html";
+document.getElementById("submitBtn").addEventListener("click", function () {
+    const reportHTML = document.getElementById("report").innerHTML;
+    localStorage.setItem("reportHTML", reportHTML);
+    window.location.href = "Morning Report.html";
 });
 
 // Auto-apply positive / negative / neutral based on the word you type
