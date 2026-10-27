@@ -20,3 +20,9 @@
 .insights-box .body .line.normal{font-weight:600;color:#fff}
 .insights-box .body .line.heading-one{font-size:1.15em;line-height:1.2;font-weight:800;color:#fff;margin:8px 0 6px}
 .insights-box .body .line.heading-two{font-size:1.06em;line-height:1.25;font-weight:750;color:#fff;margin:6px 0 4px}
+.body .line .fmt-bold{font-weight:800}
+.body .line .fmt-italic{font-style:italic}
+.body .line .fmt-underline{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.body .line .fmt-strike{text-decoration:line-through}
+.body .line .fmt-underline.fmt-strike{text-decoration:underline line-through}
+.body .line .fmt-highlight{background:#fff09d;color:#1c2a38;box-decoration-break:clone;-webkit-box-decoration-break:clone}

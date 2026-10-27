@@ -159,7 +159,7 @@ function contentEditor() {
         ${section.enabled === false ? '<div class="section-disabled-note">This slide is hidden from exported videos. You can still edit it here.</div>' : ''}
         ${field('Slide headline',`${contentKey}.${index}.title`,section.title)}
         ${field(Array.isArray(section.rows) ? 'Market summary' : 'Slide content',`${contentKey}.${index}.body`,section.body,{textarea:true,rows:Array.isArray(section.rows)?3:6,emoji:true,placeholder:'Add your market update. Line breaks and emojis are welcome.'})}
-        <div class="paragraph-style-toolbar"><label for="paragraph-style">Style selected text</label><select id="paragraph-style" class="control" data-paragraph-style="field-${contentKey}-${index}-body"><option value="">Choose a style…</option><option value="normal">Normal text</option><option value="heading1">Heading 1</option><option value="heading2">Heading 2</option><option value="auto">Original design</option></select><p>Select text or place the cursor in a paragraph, then choose its style. The preview shows the result.</p></div>
+        <div class="paragraph-style-toolbar"><label for="paragraph-style">Style selected text</label><select id="paragraph-style" class="control" data-paragraph-style="field-${contentKey}-${index}-body"><option value="">Choose a style…</option><option value="normal">Normal text</option><option value="heading1">Heading 1</option><option value="heading2">Heading 2</option><option value="auto">Original design</option></select><div class="inline-format-tools" role="toolbar" aria-label="Format selected words"><button type="button" data-inline-format="bold" data-field="field-${contentKey}-${index}-body" title="Bold (Ctrl+B)" aria-label="Bold selected text"><b>B</b></button><button type="button" data-inline-format="italic" data-field="field-${contentKey}-${index}-body" title="Italic (Ctrl+I)" aria-label="Italic selected text"><i>I</i></button><button type="button" data-inline-format="underline" data-field="field-${contentKey}-${index}-body" title="Underline (Ctrl+U)" aria-label="Underline selected text"><u>U</u></button></div><label class="inline-color-label" for="inline-text-color">Color <input id="inline-text-color" type="color" data-inline-value-kind="color" data-field="field-${contentKey}-${index}-body" value="${esc(currentBrand()?.primary||'#1456a0')}" aria-label="Selected text color"></label><button type="button" class="style-reset" data-inline-reset="color" data-field="field-${contentKey}-${index}-body" title="Use design color">Reset color</button><select class="control inline-size" data-inline-value-kind="size" data-field="field-${contentKey}-${index}-body" aria-label="Selected text size"><option value="">Text size</option><option value="24">24 px</option><option value="28">28 px</option><option value="32">32 px</option><option value="36">36 px</option><option value="40">40 px</option><option value="48">48 px</option><option value="56">56 px</option><option value="auto">Default size</option></select><p>Choose Heading styles for a paragraph. Select words for B, I, U, color, or size. Click B, I, or U again to remove it.</p></div>
         ${Array.isArray(section.rows) ? tableEditor(section,index) : ''}
         <div class="divider"></div>
         <div class="voice-header">${icon('mic')}<strong>Narration</strong><span class="badge green">FOLLOWS YOUR CONTENT</span></div>
@@ -398,6 +398,65 @@ function carryLineStyles(before,after,styles) {
   return updated;
 }
 
+function carryInlineFormats(before,after,formats) {
+  let prefix=0,suffix=0;
+  while(prefix<Math.min(before.length,after.length) && before[prefix]===after[prefix])prefix++;
+  while(suffix<before.length-prefix && suffix<after.length-prefix && before[before.length-1-suffix]===after[after.length-1-suffix])suffix++;
+  const oldEnd=before.length-suffix,newEnd=after.length-suffix,delta=after.length-before.length;
+  return formats.map(mark=>{
+    if(mark.end<=prefix)return mark;
+    if(mark.start>=oldEnd)return {...mark,start:mark.start+delta,end:mark.end+delta};
+    const start=mark.start<prefix?mark.start:newEnd;
+    const end=mark.end>oldEnd?mark.end+delta:prefix;
+    return start<end?{...mark,start,end}:null;
+  }).filter(Boolean);
+}
+
+function toggleInlineFormat(kind,textarea) {
+  if(!textarea || !['bold','italic','underline'].includes(kind))return;
+  const start=textarea.selectionStart,end=textarea.selectionEnd;
+  if(start===end){toast('Select the words you want to format first.');textarea.focus();return;}
+  const section=currentSection(),existing=section.inlineFormats||[];
+  const same=existing.filter(mark=>mark.kind===kind).sort((a,b)=>a.start-b.start);
+  let covered=start;
+  for(const mark of same){if(mark.start<=covered && mark.end>covered)covered=mark.end;if(covered>=end)break;}
+  const remove=covered>=end;
+  const next=existing.filter(mark=>mark.kind!==kind),merged=[];
+  const pieces=remove?same.flatMap(mark=>{
+    if(mark.end<=start || mark.start>=end)return [mark];
+    return [mark.start<start?{...mark,end:start}:null,mark.end>end?{...mark,start:end}:null].filter(Boolean);
+  }):[...same,{start,end,kind}];
+  pieces.sort((a,b)=>a.start-b.start);
+  for(const mark of pieces){
+    const last=merged.at(-1);
+    if(last?.kind===kind && mark.start<=last.end)last.end=Math.max(last.end,mark.end);
+    else merged.push({...mark});
+  }
+  section.inlineFormats=[...next,...merged];
+  textarea.focus();textarea.setSelectionRange(start,end);
+  queueSave();queuePreview(0);
+  toast(`${kind[0].toUpperCase()+kind.slice(1)} ${remove?'removed':'applied'} for selected words.`);
+}
+
+function setInlineValue(kind,value,textarea) {
+  if(!textarea || !['color','size'].includes(kind))return;
+  const start=textarea.selectionStart,end=textarea.selectionEnd;
+  if(start===end){toast('Select the words you want to format first.');textarea.focus();return;}
+  if(value!=='auto' && (kind==='color'?!/^#[0-9a-f]{6}$/i.test(value):!Number.isInteger(Number(value))||Number(value)<20||Number(value)>60))return;
+  const section=currentSection(),existing=section.inlineFormats||[];
+  const next=existing.filter(mark=>mark.kind!==kind);
+  for(const mark of existing.filter(mark=>mark.kind===kind)){
+    if(mark.end<=start || mark.start>=end){next.push(mark);continue;}
+    if(mark.start<start)next.push({...mark,end:start});
+    if(mark.end>end)next.push({...mark,start:end});
+  }
+  if(value!=='auto')next.push({start,end,kind,value:kind==='size'?Number(value):value});
+  section.inlineFormats=next;
+  textarea.focus();textarea.setSelectionRange(start,end);
+  queueSave();queuePreview(0);
+  toast(`${kind==='color'?'Text color':'Text size'} ${value==='auto'?'reset':'applied'} for selected words.`);
+}
+
 function applyParagraphStyle(select) {
   const textarea=document.getElementById(select.dataset.paragraphStyle),style=select.value;
   select.value='';
@@ -514,6 +573,7 @@ function changedInput(target) {
   if(bodyPath){
     const section=state.project[bodyPath[1]][Number(bodyPath[2])];
     if(section.lineStyles?.length)section.lineStyles=carryLineStyles(section.body,value,section.lineStyles);
+    if(section.inlineFormats?.length)section.inlineFormats=carryInlineFormats(section.body,value,section.inlineFormats);
   }
   setPath(target.dataset.path,value);
   if (target.dataset.path.endsWith('.accent') && target.dataset.path.startsWith('brands.')) {
@@ -550,10 +610,18 @@ document.querySelector('#app').addEventListener('input',event=>{
   if (event.target.dataset.path && !['checkbox','file'].includes(event.target.type) && event.target.tagName!=='SELECT') changedInput(event.target);
 });
 
+document.querySelector('#app').addEventListener('keydown',event=>{
+  const target=event.target;
+  if(!target.matches('textarea[data-path$=".body"]') || !(event.ctrlKey||event.metaKey) || event.altKey)return;
+  const kind={b:'bold',i:'italic',u:'underline'}[event.key.toLowerCase()];
+  if(kind){event.preventDefault();toggleInlineFormat(kind,target);}
+});
+
 document.querySelector('#app').addEventListener('change',async event=>{
   const target=event.target;
   try {
     if(target.dataset.paragraphStyle)applyParagraphStyle(target);
+    if(target.dataset.inlineValueKind){setInlineValue(target.dataset.inlineValueKind,target.value,document.getElementById(target.dataset.field));if(target.tagName==='SELECT')target.value='';}
     if (target.dataset.path && (target.type==='checkbox'||target.tagName==='SELECT')) changedInput(target);
     if (target.dataset.rebuild) render();
     if (target.id==='preview-brand') {
@@ -628,6 +696,8 @@ document.querySelector('#app').addEventListener('click',async event=>{
       if(textarea){const start=textarea.selectionStart,end=textarea.selectionEnd;textarea.setRangeText(target.dataset.insertEmoji,start,end,'end');changedInput(textarea);textarea.focus();}
       return;
     }
+    if(target.dataset.inlineFormat){toggleInlineFormat(target.dataset.inlineFormat,document.getElementById(target.dataset.field));return;}
+    if(target.dataset.inlineReset){setInlineValue(target.dataset.inlineReset,'auto',document.getElementById(target.dataset.field));return;}
     if(target.dataset.cancelJob){await api(`/api/jobs/${encodeURIComponent(target.dataset.cancelJob)}/cancel`,{method:'POST'});await refreshJobs();toast('Cancellation requested.');return;}
     if(target.dataset.deleteJob){
       const job=state.jobs.find(item=>item.id===target.dataset.deleteJob);

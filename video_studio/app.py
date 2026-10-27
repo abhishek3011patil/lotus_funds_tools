@@ -20,7 +20,7 @@ from fastapi.staticfiles import StaticFiles
 from PIL import Image, UnidentifiedImageError
 from brand_palette import extract_palette
 
-from renderer import ROOT, FFMPEG, SlideBrowser, render_batch, sections_for, local_asset
+from renderer import ROOT, FFMPEG, SlideBrowser, render_batch, sections_for, local_asset, utf16_length
 from speech import voices, voice_catalog, voice_engine, require_voice, synthesize, PREVIEW_TEXT
 import natural_speech
 
@@ -84,6 +84,22 @@ def validate(project):
         line_styles=s.get('lineStyles',[])
         if not isinstance(line_styles,list) or len(line_styles)>len(s['body'].split('\n')) or any(style not in ('auto','normal','heading1','heading2') for style in line_styles):
             raise HTTPException(422,'Paragraph styles must match the lines in the slide content.')
+        inline_formats=s.get('inlineFormats',[])
+        if not isinstance(inline_formats,list) or len(inline_formats)>400:
+            raise HTTPException(422,'Too many selected-text styles.')
+        for mark in inline_formats:
+            if not isinstance(mark,dict) or type(mark.get('start')) is not int or type(mark.get('end')) is not int or not 0<=mark['start']<mark['end']<=utf16_length(s['body']):
+                raise HTTPException(422,'Selected-text styles must refer to valid content text.')
+            kind=mark.get('kind')
+            if kind in ('bold','italic','underline','strike','highlight'):
+                valid=set(mark)=={'start','end','kind'}
+            elif kind=='size':
+                valid=set(mark)=={'start','end','kind','value'} and type(mark.get('value')) is int and 20<=mark['value']<=60
+            elif kind=='color':
+                valid=set(mark)=={'start','end','kind','value'} and isinstance(mark.get('value'),str) and bool(re.fullmatch(r'#[a-fA-F0-9]{6}',mark['value']))
+            else:
+                valid=False
+            if not valid:raise HTTPException(422,'Choose a valid selected-text style.')
         try: duration=float(s.get('duration',5))
         except (ValueError,TypeError): raise HTTPException(422,'Section duration must be a number.')
         if not math.isfinite(duration) or not 2<=duration<=900: raise HTTPException(422,'Section duration must be 2–900 seconds.')

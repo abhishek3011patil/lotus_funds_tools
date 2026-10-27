@@ -1,5 +1,6 @@
 """HTML slide composition and local H.264/AAC video rendering."""
 import base64
+import bisect
 from functools import lru_cache
 import html
 from io import BytesIO
@@ -77,18 +78,58 @@ def color(value, fallback):
 def esc(text):
     return html.escape(str(text or ''))
 
-def paragraphs(text, line_styles=None):
+def utf16_length(text):
+    return len(str(text).encode('utf-16-le')) // 2
+
+
+def styled_text(text, start, formats):
+    end=start+utf16_length(text)
+    boundaries={start,end}
+    relevant=[]
+    for mark in formats or []:
+        if (isinstance(mark,dict) and mark.get('kind') in ('bold','italic','underline','strike','highlight','color','size')
+            and isinstance(mark.get('start'),int) and isinstance(mark.get('end'),int)
+            and mark['start']<end and mark['end']>start):
+            relevant.append(mark)
+            boundaries.add(max(start,mark['start']))
+            boundaries.add(min(end,mark['end']))
+    if not relevant:return esc(text)
+    positions=[0]
+    for character in text:positions.append(positions[-1]+(2 if ord(character)>0xFFFF else 1))
+    output=[]
+    edges=sorted(boundaries)
+    for left,right in zip(edges,edges[1:]):
+        active={mark['kind']:mark for mark in relevant if mark['start']<=left and mark['end']>=right}
+        classes=' '.join('fmt-'+kind for kind in ('bold','italic','underline','strike','highlight') if kind in active)
+        inline_css=[]
+        selected_color=active.get('color',{}).get('value')
+        if re.fullmatch(r'#[a-fA-F0-9]{6}',str(selected_color)):inline_css.append(f'color:{selected_color}')
+        selected_size=active.get('size',{}).get('value')
+        if type(selected_size) is int and 20<=selected_size<=60:inline_css.append(f'font-size:{selected_size}px')
+        first=bisect.bisect_left(positions,left-start)
+        last=bisect.bisect_left(positions,right-start)
+        fragment=esc(text[first:last])
+        attributes=(f' class="{classes}"' if classes else '')+(f' style="{";".join(inline_css)}"' if inline_css else '')
+        output.append(f'<span{attributes}>{fragment}</span>' if attributes else fragment)
+    return ''.join(output)
+
+
+def paragraphs(text, line_styles=None, inline_formats=None):
     lines = []
     line_styles = line_styles or []
+    offset=0
     for index, line in enumerate(str(text).split('\n')):
         if not line.strip():
             lines.append('<div class="gap"></div>')
         else:
             header = line.startswith('#') or (len(line) < 90 and line.upper() == line and any(c.isalpha() for c in line))
-            line = line.lstrip('#').strip()
+            without_hash=line.lstrip('#')
+            leading=len(line)-len(without_hash)+len(without_hash)-len(without_hash.lstrip())
+            display=without_hash.strip()
             selected = line_styles[index] if index < len(line_styles) else 'auto'
             classes = {'normal':'normal','heading1':'heading-one','heading2':'heading-two'}.get(selected, 'strong' if header else '')
-            lines.append(f'<div class="line {classes}">{esc(line)}</div>')
+            lines.append(f'<div class="line {classes}">{styled_text(display,offset+utf16_length(line[:leading]),inline_formats)}</div>')
+        offset+=utf16_length(line)+1
     return ''.join(lines)
 
 def icon_svg(name):
@@ -162,12 +203,12 @@ def slide_html(project, brand, section):
         total = len(active) + 2
         footer = (f'<div class="standard-footer"><span>{esc(brand.get("name", ""))}</span>'
                   f'<i></i><span>MORNING ACTION</span><b>{page:02} / {total:02}</b></div>')
-        content = f'<div class="corner top"></div><div class="corner bottom"></div><div class="content"><h1 class="fit heading-fit">{esc(section.get("title"))}</h1><div class="rule"></div><div class="fit body">{paragraphs(section.get("body", ""), section.get("lineStyles"))}{table}</div></div>{footer}'
+        content = f'<div class="corner top"></div><div class="corner bottom"></div><div class="content"><h1 class="fit heading-fit">{esc(section.get("title"))}</h1><div class="rule"></div><div class="fit body">{paragraphs(section.get("body", ""), section.get("lineStyles"), section.get("inlineFormats"))}{table}</div></div>{footer}'
         classes = 'standard'
         if brand.get('layout') == 'insights':
             art_url = brand.get('art', {}).get(section.get('sourceId', kind), '')
             art = data_uri(art_url)
-            content = (f'<img class="insights-art" src="{art}">' if art else '<div class="insights-art"></div>') + f'<div class="insights-box"><h1 class="fit heading-fit">{esc(section.get("title"))}</h1><div class="fit body">{paragraphs(section.get("body", ""), section.get("lineStyles"))}{table}</div></div><div class="insights-disclaimer fit">{esc(brand.get("disclaimer", ""))}</div>'
+            content = (f'<img class="insights-art" src="{art}">' if art else '<div class="insights-art"></div>') + f'<div class="insights-box"><h1 class="fit heading-fit">{esc(section.get("title"))}</h1><div class="fit body">{paragraphs(section.get("body", ""), section.get("lineStyles"), section.get("inlineFormats"))}{table}</div></div><div class="insights-disclaimer fit">{esc(brand.get("disclaimer", ""))}</div>'
             classes = 'insights'
     return f'''<!doctype html><html><head><meta charset="utf-8"><style>
     *{{box-sizing:border-box}}html,body{{margin:0;width:1080px;height:1920px;overflow:hidden}}body{{font-family:Arial,"Segoe UI",sans-serif;color:#202227;background:#fff;--primary:{primary};--accent:{accent};}}.slide{{position:relative;width:1080px;height:1920px;overflow:hidden}}.logo{{object-fit:contain;width:100%;height:100%}}.wordmark{{font-size:85px;font-weight:800;color:var(--primary);text-align:center}}.corner{{position:absolute;background:var(--primary);width:310px;height:300px;opacity:.9}}.top{{top:0;right:0;clip-path:polygon(0 0,100% 0,100% 100%,83% 25%)}}.bottom{{left:0;bottom:0;clip-path:polygon(0 0,15% 80%,100% 100%,0 100%)}}.corner:after{{content:"";position:absolute;inset:0;background:#ffffff55;clip-path:polygon(0 0,65% 10%,100% 100%)}}.content{{position:absolute;top:148px;left:76px;right:76px;bottom:140px}}h1{{font-size:46px;font-weight:800;color:var(--accent);margin:0 0 24px;text-align:center;line-height:1.18}}.rule{{height:2px;background:#999;margin-bottom:32px}}.body{{font-size:34px;line-height:1.36;font-weight:600;overflow-wrap:anywhere;white-space:normal}}.standard .body{{height:1480px}}.line{{white-space:pre-wrap}}.strong{{font-weight:800}}.gap{{height:.72em}}table{{border-collapse:collapse;table-layout:fixed;width:100%;margin-top:12px;font-size:.91em}}th,td{{border:2px solid #8c9299;padding:28px 13px;text-align:center;white-space:pre-wrap;overflow-wrap:anywhere}}th{{background:var(--primary);color:white;font-weight:700}}thead th:first-child{{background:#fff;color:#222}}td{{background:#fff;color:#222}}.intro-logo{{position:absolute;top:90px;left:230px;right:230px;height:190px}}.date{{position:absolute;top:330px;left:50px;right:50px;text-align:center;font-size:32px;font-weight:800;text-transform:uppercase;letter-spacing:2px}}.intro-title{{position:absolute;top:430px;left:70px;right:70px;text-align:center;font-size:52px;font-weight:800;color:var(--primary)}}.intro-copy{{position:absolute;z-index:2;top:540px;left:30px;right:30px;border-radius:45px;background:var(--primary);color:white;font-size:44px;font-weight:700;padding:52px;line-height:1.35;white-space:pre-wrap}}.intro-art{{position:absolute;bottom:0;left:0;width:100%;height:960px;object-fit:cover;mask-image:linear-gradient(transparent,black 22%)}}.chart-art{{position:absolute;bottom:70px;left:100px;color:var(--primary);font-size:190px;letter-spacing:13px;opacity:.4}}.ending-logo{{position:absolute;left:180px;right:180px;top:30px;height:250px}}.ending-card{{position:absolute;top:320px;left:16px;right:16px;bottom:0;border-radius:60px 60px 0 0;background:var(--primary);color:#fff;padding:72px 60px 38px}}.ending-card:before{{content:"";position:absolute;inset:0;opacity:.08;background:repeating-linear-gradient(145deg,transparent 0,transparent 90px,#fff 92px,#fff 94px);border-radius:inherit}}.ending-inner{{position:relative;height:100%;font-size:46px;font-weight:700;overflow-wrap:anywhere}}.contact{{display:flex;gap:45px;margin:25px 0 100px;line-height:1.3;white-space:pre-wrap}}.contact>span{{font-size:1.5em;width:90px;flex-shrink:0;text-align:center}}.subscribe{{text-align:center;font-size:.62em;letter-spacing:1px;margin:75px 0 65px}}.socials{{text-align:center;font-size:.65em;margin:40px 0}}.disclaimer{{font-size:.5em;line-height:1.35;text-align:center;font-weight:500;white-space:pre-wrap}}.disclaimer-only{{border-radius:0;top:270px;padding:125px 65px 70px}}.disclaimer-only .disclaimer{{font-size:1.36em;line-height:1.4}}.insights-art{{position:absolute;top:0;left:0;width:1080px;height:790px;object-fit:cover;background:var(--primary)}}.insights-box{{position:absolute;top:820px;left:72px;right:72px;bottom:205px;border-radius:48px;background:var(--primary);color:white;padding:40px 44px}}.insights-box h1{{font-size:43px;text-align:left;color:white}}.insights-box .body{{height:735px;font-size:35px}}.insights-box table{{font-size:.82em}}.insights-box th,.insights-box td{{padding:15px 8px}}.insights-disclaimer{{position:absolute;bottom:30px;left:80px;right:80px;height:145px;font-size:21px;font-weight:600;line-height:1.18;text-align:center}}
@@ -292,8 +333,15 @@ def sections_for(project, brand):
                 chunk_styles.append(saved_styles[line_index] if line_index<len(saved_styles) else 'auto')
                 chunk_length+=len(line)+1
             append_chunk()
+            cursor=0
             for index, (body, line_styles) in enumerate(chunks):
                 item={**section,'id':section['id']+'-'+str(index+1),'sourceId':section['id'],'body':body,'lineStyles':line_styles,'title':section['title']+f' · {index+1}/{len(chunks)}','duration':float(section.get('duration',5))/len(chunks)}
+                body_start=section['body'].find(body,cursor)
+                if body_start>=0:
+                    cursor=body_start+len(body)
+                    start=utf16_length(section['body'][:body_start]);end=start+utf16_length(body)
+                    item['inlineFormats']=[{**mark,'start':max(mark['start'],start)-start,'end':min(mark['end'],end)-start}
+                        for mark in section.get('inlineFormats',[]) if mark['start']<end and mark['end']>start]
                 # A custom full-section narration is kept on the first page only.
                 if section.get('narration'):
                     item['narration']=section['narration'] if index==0 else ''
