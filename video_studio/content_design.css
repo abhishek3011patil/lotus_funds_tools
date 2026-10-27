@@ -14,3 +14,6 @@
 .standard-footer{position:absolute;left:150px;right:76px;bottom:65px;display:flex;align-items:center;gap:20px;border-top:2px solid #cad7db;padding-top:16px;font-size:19px;letter-spacing:.13em;font-weight:900;color:#617482}
 .standard-footer i{height:7px;width:7px;border-radius:50%;background:var(--primary);flex:none}
 .standard-footer b{margin-left:auto;color:var(--primary);font-size:23px;letter-spacing:.04em}
+.standard h1,.insights-box h1{font-family:var(--heading-font);font-size:var(--heading-size);font-weight:var(--heading-weight);color:var(--heading-color);text-align:var(--heading-align)}
+.standard .body .line,.insights-box .body .line{font-family:var(--body-font);font-size:var(--body-size);font-weight:var(--body-weight);color:var(--body-color);text-align:var(--body-align)}
+.standard .body .line.strong,.insights-box .body .line.strong{font-weight:800}

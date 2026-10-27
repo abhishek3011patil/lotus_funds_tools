@@ -81,6 +81,24 @@ def validate(project):
             if not isinstance(s[key],str): raise HTTPException(422,f'Section {key} must be text.')
         if not isinstance(s.get('enabled',True),bool): raise HTTPException(422,'Slide inclusion must be true or false.')
         if len(str(s.get('body','')))>18000 or len(str(s.get('narration','')))>18000: raise HTTPException(422,'Section text is too long.')
+        styles=s.get('textStyle',{})
+        if not isinstance(styles,dict) or set(styles)-{'heading','body'}:
+            raise HTTPException(422,'Text style must contain heading and body settings only.')
+        for style_name in ('heading','body'):
+            style=styles.get(style_name,{})
+            if not isinstance(style,dict) or set(style)-{'font','size','weight','align','color'}:
+                raise HTTPException(422,f'Invalid {style_name} text style.')
+            if style.get('font','auto') not in ('auto','arial','georgia','trebuchet','verdana','tahoma'):
+                raise HTTPException(422,'Choose a listed text font.')
+            if style.get('weight','auto') not in ('auto','normal','semibold','bold','heavy'):
+                raise HTTPException(422,'Choose a listed text weight.')
+            if style.get('align','auto') not in ('auto','left','center','right'):
+                raise HTTPException(422,'Choose a listed text alignment.')
+            if style.get('color','auto')!='auto' and not re.fullmatch(r'#[a-fA-F0-9]{6}',str(style.get('color'))):
+                raise HTTPException(422,'Text color must be a six-digit hex color.')
+            size=style.get('size')
+            if size is not None and (isinstance(size,bool) or not isinstance(size,(int,float)) or not math.isfinite(size) or not (28<=size<=90 if style_name=='heading' else 20<=size<=60)):
+                raise HTTPException(422,f'{style_name.capitalize()} size is out of range.')
         try: duration=float(s.get('duration',5))
         except (ValueError,TypeError): raise HTTPException(422,'Section duration must be a number.')
         if not math.isfinite(duration) or not 2<=duration<=900: raise HTTPException(422,'Section duration must be 2–900 seconds.')
