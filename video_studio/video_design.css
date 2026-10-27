@@ -31,6 +31,9 @@
 .slide-analysis .callout p{font-size:24px;line-height:1.25}
 .socials{display:flex;gap:17px;margin-top:29px}
 .socials span{width:52px;height:52px;border:2px solid #ffffffaa;border-radius:50%;display:grid;place-items:center;font-size:23px;font-weight:900}
+.socials .social-icon{width:62px;height:62px;border:0;background:#fff;color:var(--brand);border-radius:50%}
+.social-icon svg{width:37px;height:37px;fill:none;stroke:currentColor;stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+.social-icon .icon-fill,.social-icon .icon-dot{fill:currentColor;stroke:none}
 .no-contact{font-size:34px;line-height:1.2;font-weight:900;max-width:680px;margin:80px 0}
 
 /* Original video content, set as readable paragraphs and the complete table. */
