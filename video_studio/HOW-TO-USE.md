@@ -17,7 +17,7 @@ Use the slide tabs to edit the analysis, market trends, NIFTY/Sensex/Bank Nifty 
 
 The same shared content is used for each selected company. **Lotus Insights** can keep its separate script; choose it from **Content script**, or turn on **Use shared daily content** under that company in **Brands & endings**.
 
-Open **Text appearance** below a slide's headline and content to adjust its heading and paragraph font, size, weight, alignment, and color. These choices apply to that slide in every company video. Leave a setting on **Design default**, or use **Use design color**, to follow each company's branding. The market table keeps its own layout. The preview shows the styling before export; if larger text no longer fits, shorten the copy or reduce the size.
+To format a paragraph like in Word, highlight any words in **Slide content** (or place the cursor on that line), then use **Style selected text**. Choose **Heading 1**, **Heading 2**, or **Normal text**. The style applies to the whole selected paragraph; select several lines to style them together. **Original design** restores the slide's automatic formatting. Check the preview before export, especially after making long lines into headings. Styling does not change the spoken words.
 
 Edits save automatically on this computer. Check the **Saved locally** indicator before closing the browser.
 

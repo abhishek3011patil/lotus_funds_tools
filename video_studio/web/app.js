@@ -6,7 +6,7 @@ const state = {
   previewSection: null, previewUrl: '', previewError: '', previewBusy: false,
   error: '', saveLabel: 'Saved locally', selected: new Set(), jobs: [], historyLimit: 8,
   emojiField: null, saveTimer: null, previewTimer: null, pollTimer: null,
-  saveVersion: 0, previewVersion: 0, exporting: false, saving: null, introOpen: false, textStyleOpen: false,
+  saveVersion: 0, previewVersion: 0, exporting: false, saving: null, introOpen: false,
   voicePreview: null, voicePreviewError: '', voicePreviewBusy: false,
   voicePreviewVersion: 0, voicePreviewController: null,
 };
@@ -95,8 +95,6 @@ function render() {
   if (!state.project) return;
   const oldIntro=document.querySelector('.intro-editor');
   if(oldIntro)state.introOpen=oldIntro.open;
-  const oldTextStyle=document.querySelector('.text-style-editor');
-  if(oldTextStyle)state.textStyleOpen=oldTextStyle.open;
   const titles = {content:['Your daily edition','Write it once. Make it yours, across every brand.'], brands:['A familiar brand. Every frame.','Your logos, your colors, your closing message.'], export:['Ready for the opening bell.','Turn one edition into a complete set of branded videos.']};
   const [title, description] = titles[state.tab];
   document.querySelector('#app').innerHTML = `
@@ -135,7 +133,7 @@ function toggle(path, checked, label, options = '') {
 
 function field(label, path, value, options = {}) {
   const id = `field-${path.replaceAll('.','-')}`;
-  const attributes = `id="${id}" data-path="${path}" ${options.number ? 'data-number="true"' : ''} ${options.optionalNumber ? 'data-optional-number="true"' : ''} ${options.rebuild ? 'data-rebuild="true"' : ''}`;
+  const attributes = `id="${id}" data-path="${path}" ${options.number ? 'data-number="true"' : ''} ${options.rebuild ? 'data-rebuild="true"' : ''}`;
   let control;
   if (options.select) control = `<select ${attributes}>${options.select.map(item => `<option value="${esc(item.value)}" ${String(value) === String(item.value) ? 'selected' : ''}>${esc(item.label)}</option>`).join('')}</select>`;
   else if (options.textarea) control = `<textarea ${attributes} rows="${options.rows || 4}" placeholder="${esc(options.placeholder || '')}">${esc(value)}</textarea>${options.emoji ? `<div class="text-tools"><button class="emoji-trigger" data-action="emoji" data-field="${id}">${icon('smile')} Add emoji</button><span class="char-count" data-count-for="${id}">${String(value || '').length} characters</span></div>${state.emojiField === id ? emojiPicker(id) : ''}` : ''}`;
@@ -161,7 +159,7 @@ function contentEditor() {
         ${section.enabled === false ? '<div class="section-disabled-note">This slide is hidden from exported videos. You can still edit it here.</div>' : ''}
         ${field('Slide headline',`${contentKey}.${index}.title`,section.title)}
         ${field(Array.isArray(section.rows) ? 'Market summary' : 'Slide content',`${contentKey}.${index}.body`,section.body,{textarea:true,rows:Array.isArray(section.rows)?3:6,emoji:true,placeholder:'Add your market update. Line breaks and emojis are welcome.'})}
-        ${textStyleEditor(section,`${contentKey}.${index}`)}
+        <div class="paragraph-style-toolbar"><label for="paragraph-style">Style selected text</label><select id="paragraph-style" class="control" data-paragraph-style="field-${contentKey}-${index}-body"><option value="">Choose a style…</option><option value="normal">Normal text</option><option value="heading1">Heading 1</option><option value="heading2">Heading 2</option><option value="auto">Original design</option></select><p>Select text or place the cursor in a paragraph, then choose its style. The preview shows the result.</p></div>
         ${Array.isArray(section.rows) ? tableEditor(section,index) : ''}
         <div class="divider"></div>
         <div class="voice-header">${icon('mic')}<strong>Narration</strong><span class="badge green">FOLLOWS YOUR CONTENT</span></div>
@@ -172,24 +170,6 @@ function contentEditor() {
       <div class="panel-footer"><p>${icon('check')}Changes save automatically on this computer.</p><button class="btn btn-secondary btn-small" data-action="next-section">${index === sections.length-1 ? 'Customize brands' : 'Next slide'}${icon('arrow')}</button></div>
     </section>
     <div class="source-note"><strong>Sample content:</strong> The supplied videos contain dated market commentary${sourceDate?` (${esc(sourceDate)})`:''}. Review all text, prices and the publishing date before generating today’s edition.</div>`;
-}
-
-function textStyleEditor(section, path) {
-  const fonts=[{value:'auto',label:'Design default'},{value:'arial',label:'Arial'},{value:'georgia',label:'Georgia'},{value:'trebuchet',label:'Trebuchet'},{value:'verdana',label:'Verdana'},{value:'tahoma',label:'Tahoma'}];
-  const weights=[{value:'auto',label:'Design default'},{value:'normal',label:'Regular'},{value:'semibold',label:'Semi bold'},{value:'bold',label:'Bold'},{value:'heavy',label:'Extra bold'}];
-  const aligns=[{value:'auto',label:'Design default'},{value:'left',label:'Left'},{value:'center',label:'Center'},{value:'right',label:'Right'}];
-  const group=(name,label,range)=>{
-    const style=section.textStyle?.[name]||{},base=`${path}.textStyle.${name}`;
-    const fallback=name==='heading'?(currentBrand()?.layout==='insights'?'#ffffff':currentBrand()?.primary||'#1456a0'):(currentBrand()?.layout==='insights'?'#ffffff':'#1c2a38');
-    const custom=/^#[0-9a-f]{6}$/i.test(style.color||'');
-    return `<div class="text-style-group"><h4>${label}</h4><div class="text-style-grid">
-      ${field('Font',`${base}.font`,style.font||'auto',{select:fonts})}
-      ${field('Size in pixels',`${base}.size`,style.size??'',{type:'number',number:true,optionalNumber:true,min:range[0],max:range[1],step:1,placeholder:'Auto'})}
-      ${field('Weight',`${base}.weight`,style.weight||'auto',{select:weights})}
-      ${field('Alignment',`${base}.align`,style.align||'auto',{select:aligns})}
-    </div><div class="style-color-row"><label for="style-color-${name}">Text color</label><input id="style-color-${name}" type="color" data-path="${base}.color" value="${esc(custom?style.color:fallback)}" aria-label="${label} color"><span class="style-color-status">${custom?esc(style.color):'Design color'}</span><button class="btn btn-ghost btn-small" data-style-color-reset="${base}.color" ${custom?'':'disabled'}>Use design color</button></div></div>`;
-  };
-  return `<details class="text-style-editor" ${state.textStyleOpen?'open':''}><summary>Text appearance <span>Fonts, size, bold, color & alignment</span></summary><div class="text-style-inner">${group('heading','Slide heading',[28,90])}${group('body','Slide paragraphs',[20,60])}<p>Styles apply to this content slide across every selected brand. Design colors follow each company automatically. Large text may need shorter copy to fit.</p></div></details>`;
 }
 
 function tableEditor(section,index) {
@@ -403,6 +383,39 @@ function setPath(path,value) {
   target[keys.at(-1)] = value;
 }
 
+function carryLineStyles(before,after,styles) {
+  const oldLines=before.split('\n'),newLines=after.split('\n');
+  if(oldLines.length===newLines.length)return styles.slice(0,newLines.length);
+  let prefix=0,suffix=0;
+  while(prefix<Math.min(oldLines.length,newLines.length) && oldLines[prefix]===newLines[prefix])prefix++;
+  while(suffix<oldLines.length-prefix && suffix<newLines.length-prefix && oldLines[oldLines.length-1-suffix]===newLines[newLines.length-1-suffix])suffix++;
+  const updated=Array(newLines.length).fill('auto');
+  for(let i=0;i<prefix;i++)updated[i]=styles[i]||'auto';
+  for(let i=0;i<suffix;i++)updated[newLines.length-1-i]=styles[oldLines.length-1-i]||'auto';
+  const changedOld=Math.max(1,oldLines.length-prefix-suffix);
+  for(let i=prefix;i<newLines.length-suffix;i++)updated[i]=styles[prefix+Math.min(i-prefix,changedOld-1)]||'auto';
+  while(updated.at(-1)==='auto')updated.pop();
+  return updated;
+}
+
+function applyParagraphStyle(select) {
+  const textarea=document.getElementById(select.dataset.paragraphStyle),style=select.value;
+  select.value='';
+  if(!textarea || !['auto','normal','heading1','heading2'].includes(style))return;
+  const start=textarea.selectionStart,end=textarea.selectionEnd;
+  const effectiveEnd=end>start && textarea.value[end-1]==='\n'?end-1:end;
+  const first=textarea.value.slice(0,start).split('\n').length-1;
+  const last=textarea.value.slice(0,effectiveEnd).split('\n').length-1;
+  const section=currentSection(),styles=[...(section.lineStyles||[])];
+  while(styles.length<textarea.value.split('\n').length)styles.push('auto');
+  for(let line=first;line<=last;line++)styles[line]=style;
+  while(styles.at(-1)==='auto')styles.pop();
+  section.lineStyles=styles;
+  textarea.focus();textarea.setSelectionRange(start,end);
+  queueSave();queuePreview(0);
+  toast(`${style==='auto'?'Original design':style==='normal'?'Normal text':style==='heading1'?'Heading 1':'Heading 2'} applied to ${last-first+1} ${last===first?'paragraph':'paragraphs'}.`);
+}
+
 function queueSave() {
   state.saveVersion += 1;
   clearTimeout(state.saveTimer);
@@ -496,7 +509,12 @@ function toast(message,error=false) {
 
 function changedInput(target) {
   if (!target.dataset.path) return;
-  const value=target.type==='checkbox'?target.checked:target.dataset.optionalNumber==='true'&&target.value===''?null:target.dataset.number==='true'?Number(target.value):target.value;
+  const value=target.type==='checkbox'?target.checked:target.dataset.number==='true'?Number(target.value):target.value;
+  const bodyPath=target.dataset.path.match(/^(sections|insightsSections)\.(\d+)\.body$/);
+  if(bodyPath){
+    const section=state.project[bodyPath[1]][Number(bodyPath[2])];
+    if(section.lineStyles?.length)section.lineStyles=carryLineStyles(section.body,value,section.lineStyles);
+  }
   setPath(target.dataset.path,value);
   if (target.dataset.path.endsWith('.accent') && target.dataset.path.startsWith('brands.')) {
     state.project.brands[Number(target.dataset.path.split('.')[1])].secondary=value;
@@ -517,17 +535,11 @@ function changedInput(target) {
   }
   if (target.dataset.path==='settings.speechRate') { const node=document.querySelector('#speech-rate-value');if(node)node.textContent=value; }
   if (target.dataset.path==='settings.musicVolume') { const node=document.querySelector('#music-volume-value');if(node)node.textContent=`${Math.round(value*100)}%`; }
-  if (target.type==='color' && target.closest('.style-color-row')) {
-    const row=target.closest('.style-color-row');
-    row.querySelector('.style-color-status').textContent=value;
-    row.querySelector('[data-style-color-reset]').disabled=false;
-  }
   queueSave();
   queuePreview();
 }
 
 document.querySelector('#app').addEventListener('toggle',event=>{
-  if(event.target.matches('.text-style-editor')){state.textStyleOpen=event.target.open;return;}
   if (!event.target.matches('.intro-editor')) return;
   const opening=event.target.open && !state.introOpen;
   state.introOpen=event.target.open;
@@ -541,6 +553,7 @@ document.querySelector('#app').addEventListener('input',event=>{
 document.querySelector('#app').addEventListener('change',async event=>{
   const target=event.target;
   try {
+    if(target.dataset.paragraphStyle)applyParagraphStyle(target);
     if (target.dataset.path && (target.type==='checkbox'||target.tagName==='SELECT')) changedInput(target);
     if (target.dataset.rebuild) render();
     if (target.id==='preview-brand') {
@@ -616,7 +629,6 @@ document.querySelector('#app').addEventListener('click',async event=>{
       return;
     }
     if(target.dataset.cancelJob){await api(`/api/jobs/${encodeURIComponent(target.dataset.cancelJob)}/cancel`,{method:'POST'});await refreshJobs();toast('Cancellation requested.');return;}
-    if(target.dataset.styleColorReset){setPath(target.dataset.styleColorReset,'auto');queueSave();render();queuePreview();return;}
     if(target.dataset.deleteJob){
       const job=state.jobs.find(item=>item.id===target.dataset.deleteJob);
       if(!job)return;
