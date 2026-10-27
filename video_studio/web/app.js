@@ -433,7 +433,7 @@ function toggleInlineFormat(kind,textarea) {
     else merged.push({...mark});
   }
   section.inlineFormats=[...next,...merged];
-  textarea.focus();textarea.setSelectionRange(start,end);
+  restoreTextSelection(textarea,start,end);
   queueSave();queuePreview(0);
   toast(`${kind[0].toUpperCase()+kind.slice(1)} ${remove?'removed':'applied'} for selected words.`);
 }
@@ -452,14 +452,13 @@ function setInlineValue(kind,value,textarea) {
   }
   if(value!=='auto')next.push({start,end,kind,value:kind==='size'?Number(value):value});
   section.inlineFormats=next;
-  textarea.focus();textarea.setSelectionRange(start,end);
+  restoreTextSelection(textarea,start,end);
   queueSave();queuePreview(0);
   toast(`${kind==='color'?'Text color':'Text size'} ${value==='auto'?'reset':'applied'} for selected words.`);
 }
 
 function applyParagraphStyle(select) {
   const textarea=document.getElementById(select.dataset.paragraphStyle),style=select.value;
-  select.value='';
   if(!textarea || !['auto','normal','heading1','heading2'].includes(style))return;
   const start=textarea.selectionStart,end=textarea.selectionEnd;
   const effectiveEnd=end>start && textarea.value[end-1]==='\n'?end-1:end;
@@ -470,9 +469,45 @@ function applyParagraphStyle(select) {
   for(let line=first;line<=last;line++)styles[line]=style;
   while(styles.at(-1)==='auto')styles.pop();
   section.lineStyles=styles;
-  textarea.focus();textarea.setSelectionRange(start,end);
+  restoreTextSelection(textarea,start,end);
   queueSave();queuePreview(0);
   toast(`${style==='auto'?'Original design':style==='normal'?'Normal text':style==='heading1'?'Heading 1':'Heading 2'} applied to ${last-first+1} ${last===first?'paragraph':'paragraphs'}.`);
+}
+
+function restoreTextSelection(textarea,start,end) {
+  // The native menu may reclaim focus after its change handler returns.
+  const restore=()=>{
+    if(!textarea.isConnected)return;
+    textarea.focus({preventScroll:true});
+    textarea.setSelectionRange(start,end);
+    updateSelectionToolbar(textarea);
+  };
+  restore();
+  requestAnimationFrame(restore);
+}
+
+function updateSelectionToolbar(textarea) {
+  if(!textarea?.matches('textarea[data-path$=".body"]'))return;
+  const section=currentSection(),start=textarea.selectionStart,end=textarea.selectionEnd;
+  const effectiveEnd=end>start && textarea.value[end-1]==='\n'?end-1:end;
+  const first=textarea.value.slice(0,start).split('\n').length-1;
+  const last=textarea.value.slice(0,effectiveEnd).split('\n').length-1;
+  const styles=Array.from({length:last-first+1},(_,index)=>section.lineStyles?.[first+index]||'auto');
+  const styleSelect=document.querySelector('[data-paragraph-style]');
+  if(styleSelect)styleSelect.value=styles.every(style=>style===styles[0])?styles[0]:'';
+  const marks=section.inlineFormats||[];
+  const covers=(kind,value)=>{
+    const matching=marks.filter(mark=>mark.kind===kind && (value===undefined || mark.value===value)).sort((a,b)=>a.start-b.start);
+    if(start===end)return matching.some(mark=>mark.start<=start && mark.end>start);
+    let covered=start;
+    for(const mark of matching){if(mark.start<=covered && mark.end>covered)covered=mark.end;if(covered>=end)return true;}
+    return false;
+  };
+  document.querySelectorAll('[data-inline-format]').forEach(button=>button.setAttribute('aria-pressed',String(covers(button.dataset.inlineFormat))));
+  const sizeSelect=document.querySelector('[data-inline-value-kind="size"]');
+  if(sizeSelect){const chosen=marks.find(mark=>mark.kind==='size' && covers('size',mark.value));sizeSelect.value=chosen?String(chosen.value):'';}
+  const colorInput=document.querySelector('[data-inline-value-kind="color"]');
+  if(colorInput){const chosen=marks.find(mark=>mark.kind==='color' && covers('color',mark.value));colorInput.value=chosen?.value||currentBrand()?.primary||'#1456a0';}
 }
 
 function queueSave() {
@@ -608,6 +643,11 @@ document.querySelector('#app').addEventListener('toggle',event=>{
 
 document.querySelector('#app').addEventListener('input',event=>{
   if (event.target.dataset.path && !['checkbox','file'].includes(event.target.type) && event.target.tagName!=='SELECT') changedInput(event.target);
+  if(event.target.matches('textarea[data-path$=".body"]'))updateSelectionToolbar(event.target);
+});
+
+for(const eventName of ['select','click','keyup'])document.querySelector('#app').addEventListener(eventName,event=>{
+  if(event.target.matches('textarea[data-path$=".body"]'))updateSelectionToolbar(event.target);
 });
 
 document.querySelector('#app').addEventListener('keydown',event=>{
@@ -621,7 +661,7 @@ document.querySelector('#app').addEventListener('change',async event=>{
   const target=event.target;
   try {
     if(target.dataset.paragraphStyle)applyParagraphStyle(target);
-    if(target.dataset.inlineValueKind){setInlineValue(target.dataset.inlineValueKind,target.value,document.getElementById(target.dataset.field));if(target.tagName==='SELECT')target.value='';}
+    if(target.dataset.inlineValueKind)setInlineValue(target.dataset.inlineValueKind,target.value,document.getElementById(target.dataset.field));
     if (target.dataset.path && (target.type==='checkbox'||target.tagName==='SELECT')) changedInput(target);
     if (target.dataset.rebuild) render();
     if (target.id==='preview-brand') {
