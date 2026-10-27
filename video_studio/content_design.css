@@ -1,0 +1,16 @@
+/* Shared Morning Action content pages. Text and table values stay editable. */
+.standard{background:#fbfcfb}
+.standard .content{top:140px;left:76px;right:76px;bottom:166px}
+.standard h1{font-size:53px;line-height:1.22;text-align:left;color:var(--primary);letter-spacing:-.035em;margin:0 0 22px}
+.standard .rule{height:4px;border-radius:3px;background:linear-gradient(90deg,var(--primary) 0 35%,#c7d5dc 35% 100%);margin-bottom:14px}
+.standard .body{display:flex;flex-direction:column;justify-content:center;padding:0 22px;font-size:38px;line-height:1.4;font-weight:550;color:#1c2a38}
+.standard .line{margin:0 0 3px}
+.standard .strong{font-weight:800}
+.standard .gap{height:.48em}
+.standard:has(table) .body{justify-content:stretch;padding:18px 0 8px}
+.standard table{height:100%;margin:0;font-size:.8em}
+.standard th,.standard td{padding:32px 7px;line-height:1.25}
+.standard thead th:first-child{background:#edf2f4;color:#20313f}
+.standard-footer{position:absolute;left:150px;right:76px;bottom:65px;display:flex;align-items:center;gap:20px;border-top:2px solid #cad7db;padding-top:16px;font-size:19px;letter-spacing:.13em;font-weight:900;color:#617482}
+.standard-footer i{height:7px;width:7px;border-radius:50%;background:var(--primary);flex:none}
+.standard-footer b{margin-left:auto;color:var(--primary);font-size:23px;letter-spacing:.04em}

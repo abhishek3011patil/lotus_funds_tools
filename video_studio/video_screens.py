@@ -1,0 +1,105 @@
+"""Opening and ending slide designs shared by previews and animated exports."""
+from datetime import datetime
+from html import escape
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+CSS = (ROOT / 'video_design.css').read_text(encoding='utf-8')
+
+
+def _e(value):
+    return escape(str(value or ''), quote=True)
+
+
+def _date(project):
+    value = str(project.get('date', ''))
+    try:
+        parsed = datetime.strptime(value, '%Y-%m-%d')
+        suffix = 'th' if 11 <= parsed.day % 100 <= 13 else {1: 'st', 2: 'nd', 3: 'rd'}.get(parsed.day % 10, 'th')
+        return f'{parsed:%A, %B} {parsed.day}{suffix} {parsed:%Y}'.upper()
+    except ValueError:
+        return value.upper()
+
+
+def _logo(brand, logo_uri):
+    if logo_uri:
+        return f'<img class="company-logo" src="{logo_uri}" alt="{_e(brand.get("name"))} logo">'
+    return f'<div class="company-logo wordmark">{_e(brand.get("name"))}</div>'
+
+
+def _disclaimer(brand):
+    return str(brand.get('disclaimer') or '')
+
+
+def _contacts(brand):
+    parts = []
+    for key, icon in [('website', '⌁'), ('phone', '✆'), ('email', '✉'), ('address', '⌖')]:
+        value = brand.get(key)
+        if value:
+            parts.append(f'<div class="contact-row contact {"address" if key == "address" else ""}"><span class="contact-icon">{icon}</span><b>{_e(value).replace(chr(10), "<br>")}</b></div>')
+    return ''.join(parts)
+
+
+def opening_markup(project, brand, logo_uri):
+    title = str(brand.get('introTitle') or project.get('title') or 'MORNING ACTION').split()
+    first = title[0] if title else 'MORNING'
+    second = ' '.join(title[1:]) if len(title) > 1 else 'ACTION'
+    title_size = max(80, min(190, round(190 * 8 / max(8, len(first), len(second)))))
+    rows = next((item.get('rows', []) for item in project.get('sections', []) if item.get('id') == 'indices'), [])
+    first_row = rows[0] if rows else {}
+    values = [first_row.get('nifty', '—'), first_row.get('sensex', '—'), first_row.get('bankNifty', '—')]
+    ticker = ''.join(f'<div><small>{label}</small><b>{_e(value)}</b><span>↘</span></div>' for label, value in zip(('NIFTY', 'SENSEX', 'BANK NIFTY'), values))
+    page = f'{section_page(project, "intro"):02} / {section_total(project):02}'
+    return f'''<article class="slide slide-opening" style="--brand:{_e(brand.get('primary'))};--brand2:{_e(brand.get('secondary'))};--title-size:{title_size}px">
+      <div class="open-top"><div class="open-logo">{_logo(brand, logo_uri)}</div><span class="open-edition">THE DAILY MARKET BRIEF <b>{page}</b></span></div>
+      <div class="open-title-zone"><div class="open-side-label"><span class="pulse"></span>{_e(_date(project))}</div><div class="title-cluster"><span class="speed-lines"></span><span class="title-word morning">{_e(first)}</span><span class="title-word action">{_e(second)}<span class="title-arrow">↗</span></span><span class="language-tag">IN ENGLISH</span></div></div>
+      <div class="opening-chart"><div class="chart-glow"></div></div>
+      <div class="market-ticker">{ticker}</div>
+      <div class="opening-news"><span class="pulse"></span><span class="news-label">TODAY'S OPENING CALL</span><p class="fit" data-min-font="25">{_e(project.get('intro'))}</p><div class="opening-news-foot"><span>MARKET OUTLOOK</span><strong>CAUTION <span>↘</span></strong></div></div>
+      <div class="open-bottom"><span>INDICES</span><span class="dot"></span><span>TRENDS</span><span class="dot"></span><span>NEWS</span><span class="bottom-line"></span><b>01</b></div>
+    </article>'''
+
+
+def section_total(project):
+    return sum(1 for item in project.get('sections', []) if item.get('enabled', True)) + 2
+
+
+def section_page(project, kind):
+    return 1 if kind == 'intro' else section_total(project)
+
+
+def ending_markup(project, brand, logo_uri):
+    number = f'{section_page(project, "ending"):02}'
+    total = f'{section_total(project):02}'
+    disclaimer = _disclaimer(brand)
+    logo = _logo(brand, logo_uri)
+    if brand.get('endingStyle') == 'disclaimer':
+        long = 'long' if len(disclaimer) > 1000 else ''
+        website = f'<span class="disclaimer-website">{_e(brand.get("website"))}</span>' if brand.get('website') else ''
+        return f'''<article class="slide slide-disclaimer" style="--brand:{_e(brand.get('primary'))};--brand2:{_e(brand.get('secondary'))}">
+          <div class="disclaimer-top"><div class="open-logo">{logo}</div><span>IMPORTANT INFORMATION</span></div>
+          <div class="disclaimer-body {long}"><div class="disclaimer-number">{number} <i></i> {total}</div><span class="slide-kicker">PLEASE READ</span><h2>Market insight.<br><em>Informed decisions.</em></h2><div class="quote-mark">“</div><p class="fit" data-min-font="18">{_e(disclaimer)}</p><div class="disclaimer-rule"></div><span class="disclaimer-sig">EDUCATIONAL &amp; INFORMATIONAL USE ONLY</span></div>
+          <div class="disclaimer-bottom">{website}<span>INVESTMENTS ARE SUBJECT TO MARKET RISKS</span></div>
+        </article>'''
+    contact = _contacts(brand)
+    has_contact = any(brand.get(key) for key in ('website', 'phone', 'email', 'address'))
+    socials = '<div class="socials" aria-label="Social channels"><span>◎</span><span>f</span><span>𝕏</span></div>' if brand.get('show_social_icons') else ''
+    footer_note = f'<div class="brand-footer-note">{_e(brand["footer_note"]).replace(chr(10), "<br>")}</div>' if brand.get('footer_note') else ''
+    long = 'long' if len(disclaimer) > 1000 else ''
+    dense = 'dense' if len(str(brand.get('address') or '')) > 100 or brand.get('email') else ''
+    label = f'CONNECT WITH {_e(brand.get("name")).upper()}' if has_contact else 'FOLLOW FOR MORE MARKET NEWS'
+    empty = '' if has_contact else '<p class="no-contact">Independent insight for the next market session.</p>'
+    return f'''<article class="slide slide-contact" style="--brand:{_e(brand.get('primary'))};--brand2:{_e(brand.get('secondary'))}">
+      <div class="contact-top"><div class="contact-logo">{logo}</div><span>THANK YOU FOR WATCHING</span><h2>See the market<br><em>with clarity.</em></h2><p>Your morning briefing starts here.</p></div>
+      <div class="contact-panel {dense}"><span class="contact-label">{label}</span>{contact}{empty}{socials}{footer_note}<div class="contact-panel-end"><span>FOLLOW THE NEXT SESSION</span><strong>↗</strong></div></div>
+      <div class="contact-legal {long}"><span>DISCLAIMER &amp; MARKET RISK NOTICE</span><p class="disclaimer">{_e(disclaimer)}</p></div>
+      <div class="contact-bottom">MORNING ACTION <b>{number} / {total}</b></div>
+    </article>'''
+
+
+def screen_html(project, brand, kind, logo_uri, art_uri):
+    css = CSS.replace("url('assets/opening-market-art.png')", f'url("{art_uri}")')
+    # Direct render is at its natural 1080 x 1920 canvas, with no gallery wrapper.
+    css += '\nhtml,body{width:1080px;height:1920px;margin:0;overflow:hidden}.slide{transform:none}'
+    content = opening_markup(project, brand, logo_uri) if kind == 'intro' else ending_markup(project, brand, logo_uri)
+    return f'<!doctype html><html><head><meta charset="utf-8"><style>{css}</style></head><body>{content}</body></html>'

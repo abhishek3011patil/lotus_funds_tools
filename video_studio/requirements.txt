@@ -1,0 +1,20 @@
+# Pinned runtime dependencies for the Windows application.
+fastapi==0.161.1
+uvicorn==0.54.0
+python-multipart==0.0.32
+Pillow==13.0.0
+playwright==1.64.1
+imageio-ffmpeg==0.6.0
+# Local neural narration. Wheels are available for private Python 3.13 x64.
+kokoro-onnx==0.6.1
+onnxruntime==1.31.0
+numpy==2.5.4
+espeakng-loader==0.2.4
+phonemizer==3.4.0
+flatbuffers==25.12.19
+packaging==26.3
+protobuf==7.36.2
+joblib==1.6.0
+attrs==26.1.0
+dlinfo==2.0.0
+cloudpickle==3.1.2
