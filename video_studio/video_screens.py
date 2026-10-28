@@ -5,6 +5,8 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 CSS = (ROOT / 'video_design.css').read_text(encoding='utf-8')
+# Bootstrap Icons' Twitter bird, MIT licensed; see THIRD_PARTY_NOTICES.md.
+TWITTER_PATH = 'M5.026 15c6.038 0 9.341-5.003 9.341-9.334q.002-.211-.006-.422A6.7 6.7 0 0 0 16 3.542a6.7 6.7 0 0 1-1.889.518 3.3 3.3 0 0 0 1.447-1.817 6.5 6.5 0 0 1-2.087.793A3.286 3.286 0 0 0 7.875 6.03a9.32 9.32 0 0 1-6.767-3.429 3.29 3.29 0 0 0 1.018 4.382A3.3 3.3 0 0 1 .64 6.575v.045a3.29 3.29 0 0 0 2.632 3.218 3.2 3.2 0 0 1-.865.115 3 3 0 0 1-.614-.057 3.28 3.28 0 0 0 3.067 2.277A6.6 6.6 0 0 1 .78 13.58a6 6 0 0 1-.78-.045A9.34 9.34 0 0 0 5.026 15'
 
 
 def _e(value):
@@ -44,10 +46,10 @@ def _social_icons():
     icons = (
         ('Instagram', '<rect x="5" y="5" width="38" height="38" rx="11"/><circle cx="24" cy="24" r="9"/><circle class="icon-dot" cx="35.5" cy="12.5" r="2.5"/>'),
         ('Facebook', '<path class="icon-fill" d="M26.5 44V26.5h6l1-7h-7v-4.1c0-2.2.8-3.4 3.5-3.4H34V5.8c-1.7-.3-3.7-.5-5.6-.5-6.3 0-10.5 3.9-10.5 10.7v3.5h-5.8v7h5.8V44z"/>'),
-        ('Twitter', '<path class="icon-fill" d="M44 11.3a17.5 17.5 0 0 1-5.1 1.4 8.8 8.8 0 0 0 3.9-4.9 17.6 17.6 0 0 1-5.6 2.1 8.8 8.8 0 0 0-15 8 25 25 0 0 1-18.1-9.2 8.8 8.8 0 0 0 2.7 11.7 8.8 8.8 0 0 1-4-.9v.1a8.8 8.8 0 0 0 7.1 8.6 8.6 0 0 1-4 .2 8.8 8.8 0 0 0 8.2 6.1A17.7 17.7 0 0 1 3 37a25 25 0 0 0 38.5-21.1v-1.1A17.8 17.8 0 0 0 44 11.3z"/>'),
+        ('Twitter', f'<path class="icon-fill" d="{TWITTER_PATH}"/>'),
     )
     return '<div class="socials" aria-label="Social channels">' + ''.join(
-        f'<span class="social-icon" aria-label="{name}"><svg viewBox="0 0 48 48" aria-hidden="true">{path}</svg></span>'
+        f'<span class="social-icon" aria-label="{name}"><svg viewBox="0 0 {16 if name == "Twitter" else 48} {16 if name == "Twitter" else 48}" aria-hidden="true">{path}</svg></span>'
         for name, path in icons
     ) + '</div>'
 

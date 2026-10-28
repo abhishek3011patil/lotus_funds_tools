@@ -19,7 +19,7 @@ import imageio_ffmpeg
 from playwright.sync_api import sync_playwright
 from speech import synthesize, spoken_text, FLAGS
 from intro_cover import opening_cover, COVER_CSS
-from video_screens import screen_html
+from video_screens import screen_html, TWITTER_PATH
 
 ROOT = Path(__file__).resolve().parent
 FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
@@ -141,6 +141,8 @@ def paragraphs(text, line_styles=None, inline_formats=None):
     return ''.join(lines)
 
 def icon_svg(name):
+    if name == 'twitter':
+        return f'<svg viewBox="0 0 16 16" fill="currentColor"><path d="{TWITTER_PATH}"/></svg>'
     paths={
         'globe':'<circle cx="24" cy="24" r="20"/><ellipse cx="24" cy="24" rx="9" ry="20"/><path d="M4 24h40M8 13h32M8 35h32"/>',
         'phone':'<circle cx="24" cy="24" r="21"/><path d="M16 12l-4 5c1 10 9 18 19 19l5-5-8-6-4 4-6-6 4-4Z"/>',
@@ -148,8 +150,7 @@ def icon_svg(name):
         'mail':'<rect x="4" y="10" width="40" height="29" rx="4"/><path d="m5 12 19 15 19-15"/>',
         'bell':'<path d="M10 34h28l-5-7V18a9 9 0 0 0-18 0v9Zm10 6h8M24 5v4"/>',
         'instagram':'<rect x="4" y="4" width="40" height="40" rx="12"/><circle cx="24" cy="24" r="10"/><circle cx="36" cy="12" r="2" fill="currentColor"/>',
-        'facebook':'<circle cx="24" cy="24" r="21"/><path d="M28 12h-4q-5 0-5 6v26M12 24h18" stroke-width="5"/>',
-        'twitter':'<path d="M44 10l-5 2c-7-9-17-2-14 7-9 0-15-4-20-9-2 8 1 14 8 17l-6-1c2 6 6 9 12 10-5 4-11 5-17 4 26 15 42-6 39-24Z"/>'}
+        'facebook':'<circle cx="24" cy="24" r="21"/><path d="M28 12h-4q-5 0-5 6v26M12 24h18" stroke-width="5"/>'}
     return '<svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">'+paths[name]+'</svg>'
 
 def slide_html(project, brand, section):

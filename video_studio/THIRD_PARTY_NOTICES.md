@@ -2,6 +2,8 @@
 
 Tarkash Video Studio uses the following third-party software and model data for local Kokoro narration. The large base model and dependency wheels are downloaded during installation. The installation ZIP contains this notice, the full license texts listed below, the downloader, and three small Indian English persona voicepacks.
 
+The ending slide uses the [Bootstrap Icons Twitter bird SVG](https://github.com/twbs/icons/blob/main/icons/twitter.svg), licensed under MIT. Its copyright and license text are included at [installer/licenses/bootstrap-icons-MIT.txt](installer/licenses/bootstrap-icons-MIT.txt).
+
 | Component | Installed version | Upstream / source | License text included here |
 | --- | --- | --- | --- |
 | Kokoro-82M model and voice embeddings | v1.0, full-precision ONNX export | [Original model and license metadata](https://huggingface.co/hexgrad/Kokoro-82M), [ONNX export release](https://github.com/thewh1teagle/kokoro-onnx/releases/tag/model-files-v1.1) | Apache License 2.0: [full text](installer/licenses/kokoro-model-Apache-2.0.txt) |
