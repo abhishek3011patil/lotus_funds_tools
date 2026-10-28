@@ -277,7 +277,7 @@ function brandEditor() {
     <div class="brand-toolbar"><div><h2>Your companies</h2><p>${state.project.brands.length} saved</p></div><button class="btn btn-primary btn-small" data-action="add-brand">${icon('plus')}Add brand</button></div>
     <div class="brand-list" aria-label="Brand library">${state.project.brands.map(item => `<button class="brand-card ${item.id === brand.id ? 'active' : ''}" data-brand="${esc(item.id)}" aria-pressed="${item.id === brand.id}">${brandLogo(item)}<span><strong>${esc(item.name)}</strong><small>${item.enabled === false ? 'Excluded from default batch' : 'Brand variation'}</small></span></button>`).join('')}</div>
     <section class="panel">
-      <div class="panel-header"><div><h2>${esc(brand.name)}</h2><p class="subtitle">A consistent identity, from first frame to last</p></div><div class="brand-header-toggles">${toggle(`${prefix}.includeDisclaimerPage`,!!brand.includeDisclaimerPage,'Also add full page','data-rebuild="true" title="Add a separate full-screen disclaimer after this company’s ending"')}${toggle(`${prefix}.enabled`,brand.enabled !== false,'Default batch','data-rebuild="true"')}</div></div>
+      <div class="panel-header"><div><h2>${esc(brand.name)}</h2><p class="subtitle">A consistent identity, from first frame to last</p></div><div class="brand-header-toggles">${toggle(`${prefix}.includeDisclaimerPage`,!!brand.includeDisclaimerPage,'Also add full page','data-rebuild="true" title="Add a separate full-screen disclaimer before this company’s ending"')}${toggle(`${prefix}.enabled`,brand.enabled !== false,'Default batch','data-rebuild="true"')}</div></div>
       <div class="panel-body">
         <div class="logo-upload-row"><div class="logo-preview">${safeUrl(brand.logo) ? `<img src="${safeUrl(brand.logo)}" alt="${esc(brand.name)} logo">` : icon('image')}</div><div><label class="btn btn-secondary btn-small upload-label" for="logo-file">${icon('upload')}Replace logo</label><input type="file" id="logo-file" class="file-input" accept="image/png,image/jpeg,image/webp">${brand.logo?`<button class="btn btn-ghost btn-small" data-action="logo-colors">Use logo colors</button>`:''}<p>PNG, JPG or WebP. Logo colors are selected automatically; white and black are ignored. You can adjust them below.</p></div></div>
         ${field('Brand name',`${prefix}.name`,brand.name)}
@@ -341,7 +341,7 @@ function exportEditor() {
 
 function previewPanel() {
   const brand = currentBrand(), sections = brandSections(brand);
-  const options = [{id:'intro',title:'Opening title'},...sections,{id:'ending',title:'Brand ending'},...(brand?.includeDisclaimerPage?[{id:'disclaimer',title:'Full-screen disclaimer'}]:[])];
+  const options = [{id:'intro',title:'Opening title'},...sections,...(brand?.includeDisclaimerPage?[{id:'disclaimer',title:'Full-screen disclaimer'}]:[]),{id:'ending',title:'Brand ending'}];
   return `<aside class="preview-column" aria-label="Video preview">
     <section class="panel preview-card"><div class="preview-title"><h3>${icon('image')}Live preview</h3><span class="badge neutral">9:16 · PORTRAIT</span></div>
       <select id="preview-brand" class="control preview-brand" aria-label="Preview brand">${state.project.brands.map(item=>`<option value="${esc(item.id)}" ${item.id === brand?.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select>

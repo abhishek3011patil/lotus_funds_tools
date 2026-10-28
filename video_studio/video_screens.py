@@ -83,7 +83,7 @@ def section_total(project, brand):
 def section_page(project, brand, kind):
     if kind == 'intro': return 1
     total = section_total(project, brand)
-    return total if kind == 'disclaimer' else total-int(brand.get('includeDisclaimerPage', brand.get('endingStyle')=='disclaimer'))
+    return total if kind == 'ending' else total-1
 
 
 def ending_markup(project, brand, logo_uri, kind='ending'):
