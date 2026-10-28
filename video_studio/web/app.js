@@ -67,7 +67,7 @@ function normalizeProject(project) {
   project.settings.voiceEngine = engineForVoice(project.settings.voice);
   project.sections.forEach(section => { section.body ??= ''; section.narration ??= ''; section.enabled ??= true; section.duration ??= 8; });
   (project.insightsSections || []).forEach(section => { section.body ??= ''; section.narration ??= ''; section.enabled ??= true; section.duration ??= 8; });
-  project.brands.forEach(brand => { brand.enabled ??= true; brand.endingStyle ||= 'combined'; delete brand.voice; });
+  project.brands.forEach(brand => { brand.enabled ??= true; brand.endingStyle ||= 'combined'; if(brand.endingStyle==='disclaimer'){brand.endingStyle='contact';brand.includeDisclaimerPage ??= true;} brand.includeDisclaimerPage ??= false; delete brand.voice; });
   return project;
 }
 
@@ -285,12 +285,14 @@ function brandEditor() {
         <div class="field-row">${colorField('Primary color',`${prefix}.primary`,brand.primary || '#144f9f')}${colorField('Accent color',`${prefix}.accent`,brand.accent || '#f3b74f')}</div>
         <div class="divider"></div>
         <div class="subheading"><h3>Closing screen</h3><button class="btn btn-ghost btn-small" data-action="preview-ending">${icon('image')}Preview ending</button></div>
-        ${field('Ending design',`${prefix}.endingStyle`,brand.endingStyle,{select:[...(brand.layout==='insights'?[{value:'follow',label:'Comic follow card'}]:[]),{value:'combined',label:'Contact details + disclaimer'},{value:'contact',label:'Compact contact + disclaimer'},{value:'disclaimer',label:'Full-screen disclaimer'}]})}
-        ${field('Ending minimum duration',`${prefix}.endingDuration`,brand.endingDuration || 10,{type:'number',number:true,min:5,max:180,step:1,hint:'Seconds. Allow enough time for viewers to read your disclosure.'})}
+        ${field('Ending design',`${prefix}.endingStyle`,brand.endingStyle,{select:[...(brand.layout==='insights'?[{value:'follow',label:'Comic follow card'}]:[]),{value:'combined',label:'Contact details + disclaimer'},{value:'contact',label:'Compact contact + disclaimer'}]})}
+        ${field('Closing page duration',`${prefix}.endingDuration`,brand.endingDuration || 10,{type:'number',number:true,min:5,max:180,step:1,hint:'Seconds for the company ending and, when enabled, its separate disclaimer page.'})}
         <div class="field-row">${field('Website',`${prefix}.website`,brand.website,{placeholder:'yourwebsite.com'})}${field('Phone',`${prefix}.phone`,brand.phone,{type:'tel',placeholder:'+91 …'})}</div>
         ${field('Email',`${prefix}.email`,brand.email,{type:'email',optional:true,placeholder:'hello@yourbrand.com'})}
         ${field('Office address',`${prefix}.address`,brand.address,{textarea:true,rows:2,optional:true})}
         ${field('Disclaimer',`${prefix}.disclaimer`,brand.disclaimer,{textarea:true,rows:6,emoji:true,hint:'Your wording is used as entered. Keep required disclosures complete and easy to read.'})}
+        <div class="settings-row"><div><strong>Separate full-screen disclaimer</strong><p>Add a dedicated disclaimer page after this company’s ending. Turn it off to omit the extra page.</p></div>${toggle(`${prefix}.includeDisclaimerPage`,!!brand.includeDisclaimerPage,'Include page','data-rebuild="true"')}</div>
+        ${brand.includeDisclaimerPage?`<button class="btn btn-ghost btn-small" data-action="preview-disclaimer">${icon('image')}Preview disclaimer page</button>`:''}
         ${brand.ending_text !== undefined || brand.layout==='insights' ? field('Closing message',`${prefix}.ending_text`,brand.ending_text || '',{textarea:true,rows:3,emoji:true,optional:true}) : ''}
         ${brand.footer_note !== undefined ? field('Footer note',`${prefix}.footer_note`,brand.footer_note || '',{textarea:true,rows:2,optional:true}) : ''}
         ${field('Social / follow message',`${prefix}.socialText`,brand.socialText || '',{optional:true,placeholder:'Subscribe for your daily market update'})}
@@ -326,7 +328,7 @@ function exportEditor() {
         ${settings.narration !== false ? `<div class="settings-row narrator-row"><div><strong>Narrator for every video</strong><p>One selected voice for all companies in this batch</p></div><select class="control" data-path="settings.voice" aria-label="Narrator for every video">${voiceOptionsHTML()}</select></div>
         <div class="settings-row"><div><strong>Speaking pace</strong><p>Slower and clearer, or a little brisker</p></div><div><input aria-label="Speaking pace" type="range" min="-5" max="5" step="1" value="${Number(settings.speechRate)||0}" data-path="settings.speechRate" data-number="true"><span class="range-value" id="speech-rate-value">${Number(settings.speechRate)||0}</span></div></div>
         <div data-voice-preview>${voicePreviewHTML()}</div>
-        <div class="settings-row"><div><strong>Read closing page aloud</strong><p>Also narrate each brand’s closing message.</p></div>${toggle('settings.readDisclaimer',!!settings.readDisclaimer,'Read aloud')}</div>` : ''}
+        <div class="settings-row"><div><strong>Read closing page aloud</strong><p>Narrate the company ending, or its separate disclaimer page when included.</p></div>${toggle('settings.readDisclaimer',!!settings.readDisclaimer,'Read aloud')}</div>` : ''}
         <div class="settings-row"><div><strong>Background music</strong><p>${settings.music?'An uploaded track is ready for this edition.':'Add an MP3 or WAV that you have permission to use.'}</p></div><label class="btn btn-secondary btn-small upload-label" for="music-file">${icon('upload')}${settings.music?'Replace music':'Upload music'}</label><input type="file" id="music-file" class="file-input" accept="audio/mpeg,audio/wav,.mp3,.wav"></div>
         ${settings.music ? `<div class="settings-row"><div><strong>Music volume</strong><p>Keep the voice clearly audible</p></div><div><input type="range" aria-label="Music volume" min="0" max="0.5" step="0.01" value="${Number(settings.musicVolume ?? 0.12)}" data-path="settings.musicVolume" data-number="true"><span class="range-value" id="music-volume-value">${Math.round(Number(settings.musicVolume??.12)*100)}%</span></div></div><button class="btn btn-ghost btn-small" data-action="clear-music">${icon('trash')}Remove background music</button>` : ''}
         <div class="speaker-note">${icon('mic')}<span>Slide timing grows to fit narration. Unchanged voice audio is reused; edited text generates new narration.</span></div>
@@ -340,13 +342,13 @@ function exportEditor() {
 
 function previewPanel() {
   const brand = currentBrand(), sections = brandSections(brand);
-  const options = [{id:'intro',title:'Opening title'},...sections,{id:'ending',title:'Brand ending & disclaimer'}];
+  const options = [{id:'intro',title:'Opening title'},...sections,{id:'ending',title:'Brand ending'},...(brand?.includeDisclaimerPage?[{id:'disclaimer',title:'Full-screen disclaimer'}]:[])];
   return `<aside class="preview-column" aria-label="Video preview">
     <section class="panel preview-card"><div class="preview-title"><h3>${icon('image')}Live preview</h3><span class="badge neutral">9:16 · PORTRAIT</span></div>
       <select id="preview-brand" class="control preview-brand" aria-label="Preview brand">${state.project.brands.map(item=>`<option value="${esc(item.id)}" ${item.id === brand?.id?'selected':''}>${esc(item.name)}</option>`).join('')}</select>
       <div id="portrait-shell" class="portrait-shell"></div>
       <div class="preview-caption"><strong>${esc(brand?.name || 'Your brand')}</strong><span>${state.project.settings.quality === '720p' ? '720 × 1280' : '1080 × 1920'}</span></div>
-      <select class="control preview-scene" id="preview-scene" aria-label="Preview slide">${options.map((item,index)=>`<option value="${esc(item.id)}" ${item.id===state.previewSection?'selected':''}>${index===0?'Intro':index===options.length-1?'Ending':String(index).padStart(2,'0')} · ${esc(item.title)}</option>`).join('')}</select>
+      <select class="control preview-scene" id="preview-scene" aria-label="Preview slide">${options.map((item,index)=>`<option value="${esc(item.id)}" ${item.id===state.previewSection?'selected':''}>${index===0?'Intro':item.id==='ending'?'Ending':item.id==='disclaimer'?'Disclaimer':String(index).padStart(2,'0')} · ${esc(item.title)}</option>`).join('')}</select>
       <p class="preview-note">Your actual video frame. Updates as you edit.</p><div id="preview-error"></div>
     </section>
   </aside>`;
@@ -677,10 +679,12 @@ document.querySelector('#app').addEventListener('change',async event=>{
     if(target.dataset.paragraphStyle)applyParagraphStyle(target);
     if(target.dataset.inlineValueKind)setInlineValue(target.dataset.inlineValueKind,target.value,document.getElementById(target.dataset.field));
     if (target.dataset.path && (target.type==='checkbox'||target.tagName==='SELECT')) changedInput(target);
+    if(target.dataset.path?.endsWith('.includeDisclaimerPage'))state.previewSection=target.checked?'disclaimer':'ending';
     if (target.dataset.rebuild) render();
     if (target.id==='preview-brand') {
       const showingIntro=state.previewSection==='intro';
       state.brandId=target.value;state.previewUrl='';
+        if(state.previewSection==='disclaimer' && !currentBrand()?.includeDisclaimerPage)state.previewSection='ending';
       if(state.tab==='content') {state.contentKey=currentBrand()?.useSharedContent===false&&state.project.insightsSections?'insightsSections':'sections';state.sectionId=currentSections()[0]?.id;state.previewSection=showingIntro?'intro':state.sectionId||'intro';}
       render();queuePreview(0);
     }
@@ -774,6 +778,7 @@ document.querySelector('#app').addEventListener('click',async event=>{
       case 'refresh-preview':queuePreview(0);break;
       case 'preview-intro':state.previewSection='intro';render();queuePreview(0);break;
       case 'preview-ending':state.previewSection='ending';render();queuePreview(0);break;
+      case 'preview-disclaimer':state.previewSection='disclaimer';render();queuePreview(0);break;
       case 'clear-music':state.project.settings.music='';queueSave();render();break;
       case 'logo-colors':{
         const brand=currentBrand(),result=await api('/api/logo-palette',{method:'POST',body:JSON.stringify({url:brand.logo})});
@@ -798,7 +803,7 @@ document.querySelector('#app').addEventListener('click',async event=>{
       case 'add-row':currentSection().rows.push({metric:'',nifty:'',sensex:'',bankNifty:''});queueSave();render();queuePreview();break;
       case 'remove-row':currentSection().rows.splice(Number(target.dataset.row),1);queueSave();render();queuePreview();break;
       case 'add-brand':{
-        const brand={id:`brand-${Date.now().toString(36)}`,name:'New brand',primary:'#1456a0',accent:'#e8aa57',logo:'',website:'',phone:'',address:'',email:'',disclaimer:currentBrand()?.disclaimer||'',endingStyle:'combined',enabled:true,source:'Custom brand'};
+        const brand={id:`brand-${Date.now().toString(36)}`,name:'New brand',primary:'#1456a0',accent:'#e8aa57',logo:'',website:'',phone:'',address:'',email:'',disclaimer:currentBrand()?.disclaimer||'',endingStyle:'combined',includeDisclaimerPage:false,enabled:true,source:'Custom brand'};
         state.project.brands.push(brand);state.brandId=brand.id;state.selected.add(brand.id);state.previewSection='ending';queueSave();render();queuePreview(0);break;
       }
       case 'delete-brand':{

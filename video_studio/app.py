@@ -75,7 +75,7 @@ def validate(project):
             ids.append(item['id'])
         if len(ids)!=len(set(ids)): raise HTTPException(422,'Duplicate brand or section ids are not allowed.')
     for s in project['sections']+project.get('insightsSections',[]):
-        if s['id'] in ('intro','ending'): raise HTTPException(422,'intro and ending are reserved section ids.')
+        if s['id'] in ('intro','ending','disclaimer'): raise HTTPException(422,'intro, ending and disclaimer are reserved section ids.')
         for key in ('title','body','narration'):
             s.setdefault(key,'')
             if not isinstance(s[key],str): raise HTTPException(422,f'Section {key} must be text.')
@@ -110,6 +110,11 @@ def validate(project):
         # Older projects saved company-specific voices. A batch now uses only
         # the narrator selected in project settings for every company.
         b.pop('voice',None)
+        if b.get('endingStyle')=='disclaimer':
+            b['endingStyle']='contact'
+            b.setdefault('includeDisclaimerPage',True)
+        b.setdefault('includeDisclaimerPage',False)
+        if not isinstance(b['includeDisclaimerPage'],bool): raise HTTPException(422,'The separate disclaimer option must be on or off.')
         if not isinstance(b.get('name'),str) or not b['name'].strip(): raise HTTPException(422,'Every brand needs a name.')
         for key in ('logo','website','phone','email','address','disclaimer','socialText','instagram','facebook','twitter','ending_text','footer_note','introTitle'):
             if key in b and (not isinstance(b[key],str) or len(b[key])>18000): raise HTTPException(422,f'Brand {key} must be text, up to 18,000 characters.')
@@ -146,6 +151,11 @@ def get_project():
             if brand.get('layout')=='insights' and brand.get('endingStyle')=='combined':
                 brand['endingStyle']='follow'
         project['version']=2
+    for brand in project.get('brands',[]):
+        if brand.get('endingStyle')=='disclaimer':
+            brand['endingStyle']='contact'
+            brand.setdefault('includeDisclaimerPage',True)
+        brand.setdefault('includeDisclaimerPage',False)
     return project
 
 @app.get('/api/health')

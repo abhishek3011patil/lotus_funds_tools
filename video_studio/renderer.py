@@ -159,7 +159,7 @@ def slide_html(project, brand, section):
     logo = data_uri(brand.get('logo'))
     logo_html = f'<img class="logo" src="{logo}" alt="{esc(brand["name"])}">' if logo else f'<div class="wordmark">{esc(brand["name"])}</div>'
     kind = section['id']
-    if kind in ('intro', 'ending') and brand.get('layout') != 'insights' and not (kind == 'ending' and brand.get('endingStyle') == 'follow'):
+    if kind == 'disclaimer' or (kind in ('intro', 'ending') and (brand.get('layout') != 'insights' or brand.get('endingStyle') == 'disclaimer') and not (kind == 'ending' and brand.get('endingStyle') == 'follow')):
         art = data_uri(brand.get('introImage', '/assets/market-intro.png'))
         safe_brand = {**brand, 'primary': primary, 'secondary': color(brand.get('secondary'), primary)}
         return screen_html(project, safe_brand, kind,
@@ -209,7 +209,7 @@ def slide_html(project, brand, section):
             table += '</tbody></table>'
         active = [item for item in project.get('sections', []) if item.get('enabled', True)]
         page = next((index + 2 for index, item in enumerate(active) if item['id'] == kind), 2)
-        total = len(active) + 2
+        total = len(active) + 2 + int(brand.get('includeDisclaimerPage', brand.get('endingStyle')=='disclaimer'))
         footer = (f'<div class="standard-footer"><span>{esc(brand.get("name", ""))}</span>'
                   f'<i></i><span>MORNING ACTION</span><b>{page:02} / {total:02}</b></div>')
         content = f'<div class="corner top"></div><div class="corner bottom"></div><div class="content"><h1 class="fit heading-fit">{esc(section.get("title"))}</h1><div class="rule"></div><div class="fit body">{paragraphs(section.get("body", ""), section.get("lineStyles"), section.get("inlineFormats"))}{table}</div></div>{footer}'
@@ -267,6 +267,7 @@ class SlideBrowser:
         hide = {
             'intro': '.open-top,.open-title-zone,.market-ticker,.opening-news,.open-bottom',
             'ending': '.contact-top,.contact-panel,.contact-legal,.contact-bottom,.disclaimer-top,.disclaimer-body,.disclaimer-bottom',
+            'disclaimer': '.contact-top,.contact-panel,.contact-legal,.contact-bottom,.disclaimer-top,.disclaimer-body,.disclaimer-bottom',
         }[kind]
         background_style = self.page.add_style_tag(content=hide + '{visibility:hidden!important}')
         self.page.screenshot(path=str(base))
@@ -358,8 +359,11 @@ def sections_for(project, brand):
                 output.append(item)
         else:
             output.append(section.copy())
+    separate=brand.get('includeDisclaimerPage', brand.get('endingStyle')=='disclaimer')
     closing_text=brand.get('ending_text','FOLLOW FOR MORE MARKET NEWS!') if brand.get('endingStyle')=='follow' else brand.get('disclaimer','')
-    output.append({'id':'ending','title':'','body':closing_text,'duration':brand.get('endingDuration',10),'silent':not project['settings'].get('readDisclaimer',False)})
+    output.append({'id':'ending','title':'Company ending','body':closing_text,'duration':brand.get('endingDuration',10),'silent':bool(separate) or not project['settings'].get('readDisclaimer',False)})
+    if separate:
+        output.append({'id':'disclaimer','title':'Full-screen disclaimer','body':brand.get('disclaimer',''),'duration':brand.get('endingDuration',10),'silent':not project['settings'].get('readDisclaimer',False)})
     return output
 
 def run_process(command, job, timeout=1800):
@@ -382,7 +386,7 @@ def video_filter(section_id, width, duration):
     """Keep slide artwork still and use a brief cut-safe fade."""
     height = round(width * 16 / 9)
     filters = [f'scale={width}:{height}']
-    fade_duration = .45 if section_id in ('intro', 'ending') else .22
+    fade_duration = .45 if section_id in ('intro', 'ending', 'disclaimer') else .22
     filters.append(f'fade=t=in:st=0:d={fade_duration:.2f}')
     filters.append(f'fade=t=out:st={max(.3, duration-fade_duration):.3f}:d={fade_duration:.2f}')
     return ','.join(filters)
@@ -424,11 +428,11 @@ def render_batch(project, selected, job):
                 if job.get('cancel'): raise InterruptedError('Export cancelled.')
                 job['message']=f'{brand["name"]} · {section.get("title") or "Closing disclaimer"}'
                 image_path=work/f'{brand["id"]}-{index:02d}.png'
-                standard_design = brand.get('layout') != 'insights' and not (section['id'] == 'ending' and brand.get('endingStyle') == 'follow')
+                standard_design = section['id'] == 'disclaimer' or ((brand.get('layout') != 'insights' or brand.get('endingStyle') == 'disclaimer') and not (section['id'] == 'ending' and brand.get('endingStyle') == 'follow'))
                 if section['id'] == 'intro' and standard_design:
                     visual_paths = browser.capture_opening_layers(project,brand,section,image_path)
                     motion = 'opening'
-                elif section['id'] == 'ending' and standard_design:
+                elif section['id'] in ('ending','disclaimer') and standard_design:
                     visual_paths = list(browser.capture_layers(project,brand,section,image_path))
                     motion = 'ending'
                 else:

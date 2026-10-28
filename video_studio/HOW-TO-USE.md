@@ -45,7 +45,7 @@ Open **Brands & endings** and pick a company. **Add brand** creates another comp
 
 To remove a company, select it and click **Delete brand** at the bottom of its settings. Confirm the removal. It disappears from the saved company library and future exports; videos already generated remain in Export activity. Keep at least one company in the studio.
 
-Choose the company's narrator if it should differ from the daily voice. Select an **Ending design**, then review the website, phone, email, office address, disclaimer, follow message, and social handles. The **Ending minimum duration** should allow enough time to read the disclaimer. Use **Preview ending** and the preview panel before export. Company colors appear throughout its video; the opening and closing pages animate while the content pages remain still.
+Select an **Ending design**, then review the website, phone, email, office address, disclaimer, follow message, and social handles. Tick **Separate full-screen disclaimer** for a dedicated page after that company's ending, or leave it off to omit the extra page. The company ending still shows its compact risk notice. Use **Preview ending** and **Preview disclaimer page** to inspect both. **Closing page duration** sets the minimum for each closing page. Company colors appear throughout its video; the opening and closing pages animate while the content pages remain still.
 
 The preview panel can switch both **company** and **slide**. It shows a frame from the video; it does not play the full animation or narration. Generate a test MP4 to review movement and sound together.
 
