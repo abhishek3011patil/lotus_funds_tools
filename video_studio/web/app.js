@@ -659,7 +659,10 @@ document.querySelector('#app').addEventListener('keydown',event=>{
   const target=event.target;
   if(!target.matches('textarea[data-path$=".body"]') || !(event.ctrlKey||event.metaKey))return;
   const key=event.key.toLowerCase();
-  const style=event.altKey&&!event.shiftKey?{'1':'heading1','2':'heading2','0':'auto'}[key]:!event.altKey&&event.shiftKey&&key==='n'?'normal':null;
+  // Ctrl+Alt can act like AltGr on some Windows keyboard layouts, changing
+  // event.key into a symbol even though the physical digit key was pressed.
+  const digit={'Digit1':'1','Numpad1':'1','Digit2':'2','Numpad2':'2','Digit0':'0','Numpad0':'0'}[event.code]||key;
+  const style=event.altKey&&!event.shiftKey?{'1':'heading1','2':'heading2','0':'auto'}[digit]:!event.altKey&&event.shiftKey&&(key==='n'||event.code==='KeyN')?'normal':null;
   if(style){event.preventDefault();applyParagraphStyle(document.querySelector('[data-paragraph-style]'),style);return;}
   if(event.altKey||event.shiftKey)return;
   const kind={b:'bold',i:'italic',u:'underline'}[key];
