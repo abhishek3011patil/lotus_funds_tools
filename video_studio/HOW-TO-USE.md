@@ -21,6 +21,8 @@ To format a paragraph like in Word, highlight any words in **Slide content** (or
 
 While the cursor is in **Slide content**, press **Ctrl+Alt+1** for Heading 1, **Ctrl+Alt+2** for Heading 2, **Ctrl+Shift+N** for Normal text, or **Ctrl+Alt+0** for Original design. The shortcuts appear in the style menu and when you hover over it. Select words and press **Ctrl+B**, **Ctrl+I**, or **Ctrl+U** for bold, italic, or underline; hovering over those buttons also shows the shortcut.
 
+To make a list, select the paragraphs in **Slide content** and click **• List** for bullets or **1. List** for numbers. The same choices appear in **Style selected text**. Consecutive list paragraphs become one list, and a blank line starts a new list. Click the active list button again, or choose **Original design**, to return selected paragraphs to their usual appearance. The preview and export show the list markers; narration reads only the words.
+
 For individual words, select them and click **B** (bold), *I* (italic), or **U** (underline), or choose a text color or size. Click B, I, or U again to remove it. **Reset color** and **Default size** restore the slide design for selected words. Ctrl+B, Ctrl+I and Ctrl+U also work while editing Slide content. The video preview shows the finished styling; the text box keeps plain text so the voice reads the words normally.
 
 Edits save automatically on this computer. Check the **Saved locally** indicator before closing the browser.

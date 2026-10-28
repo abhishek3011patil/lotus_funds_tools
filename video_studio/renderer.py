@@ -118,7 +118,14 @@ def paragraphs(text, line_styles=None, inline_formats=None):
     lines = []
     line_styles = line_styles or []
     offset=0
+    active_list=None
     for index, line in enumerate(str(text).split('\n')):
+        selected = line_styles[index] if index < len(line_styles) else 'auto'
+        list_kind=selected if line.strip() and selected in ('ul','ol') else None
+        if active_list!=list_kind:
+            if active_list:lines.append(f'</{active_list}>')
+            if list_kind:lines.append(f'<{list_kind} class="content-list">')
+            active_list=list_kind
         if not line.strip():
             lines.append('<div class="gap"></div>')
         else:
@@ -126,10 +133,11 @@ def paragraphs(text, line_styles=None, inline_formats=None):
             without_hash=line.lstrip('#')
             leading=len(line)-len(without_hash)+len(without_hash)-len(without_hash.lstrip())
             display=without_hash.strip()
-            selected = line_styles[index] if index < len(line_styles) else 'auto'
             classes = {'normal':'normal','heading1':'heading-one','heading2':'heading-two'}.get(selected, 'strong' if header else '')
-            lines.append(f'<div class="line {classes}">{styled_text(display,offset+utf16_length(line[:leading]),inline_formats)}</div>')
+            tag='li' if list_kind else 'div'
+            lines.append(f'<{tag} class="line {classes}">{styled_text(display,offset+utf16_length(line[:leading]),inline_formats)}</{tag}>')
         offset+=utf16_length(line)+1
+    if active_list:lines.append(f'</{active_list}>')
     return ''.join(lines)
 
 def icon_svg(name):

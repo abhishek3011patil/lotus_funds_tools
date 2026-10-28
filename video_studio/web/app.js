@@ -159,7 +159,7 @@ function contentEditor() {
         ${section.enabled === false ? '<div class="section-disabled-note">This slide is hidden from exported videos. You can still edit it here.</div>' : ''}
         ${field('Slide headline',`${contentKey}.${index}.title`,section.title)}
         ${field(Array.isArray(section.rows) ? 'Market summary' : 'Slide content',`${contentKey}.${index}.body`,section.body,{textarea:true,rows:Array.isArray(section.rows)?3:6,emoji:true,placeholder:'Add your market update. Line breaks and emojis are welcome.'})}
-        <div class="paragraph-style-toolbar"><label for="paragraph-style">Style selected text</label><select id="paragraph-style" class="control" data-paragraph-style="field-${contentKey}-${index}-body" title="Heading 1: Ctrl+Alt+1 · Heading 2: Ctrl+Alt+2 · Normal text: Ctrl+Shift+N · Original design: Ctrl+Alt+0"><option value="">Choose a style…</option><option value="normal" title="Ctrl+Shift+N">Normal text · Ctrl+Shift+N</option><option value="heading1" title="Ctrl+Alt+1">Heading 1 · Ctrl+Alt+1</option><option value="heading2" title="Ctrl+Alt+2">Heading 2 · Ctrl+Alt+2</option><option value="auto" title="Ctrl+Alt+0">Original design · Ctrl+Alt+0</option></select><div class="inline-format-tools" role="toolbar" aria-label="Format selected words"><button type="button" data-inline-format="bold" data-field="field-${contentKey}-${index}-body" title="Bold (Ctrl+B)" aria-label="Bold selected text"><b>B</b></button><button type="button" data-inline-format="italic" data-field="field-${contentKey}-${index}-body" title="Italic (Ctrl+I)" aria-label="Italic selected text"><i>I</i></button><button type="button" data-inline-format="underline" data-field="field-${contentKey}-${index}-body" title="Underline (Ctrl+U)" aria-label="Underline selected text"><u>U</u></button></div><label class="inline-color-label" for="inline-text-color">Color <input id="inline-text-color" type="color" data-inline-value-kind="color" data-field="field-${contentKey}-${index}-body" value="${esc(currentBrand()?.primary||'#1456a0')}" aria-label="Selected text color"></label><button type="button" class="style-reset" data-inline-reset="color" data-field="field-${contentKey}-${index}-body" title="Use design color">Reset color</button><select class="control inline-size" data-inline-value-kind="size" data-field="field-${contentKey}-${index}-body" aria-label="Selected text size"><option value="">Text size</option><option value="24">24 px</option><option value="28">28 px</option><option value="32">32 px</option><option value="36">36 px</option><option value="40">40 px</option><option value="48">48 px</option><option value="56">56 px</option><option value="auto">Default size</option></select><p>Choose Heading styles for a paragraph. Select words for B, I, U, color, or size. Click B, I, or U again to remove it.</p></div>
+        <div class="paragraph-style-toolbar"><label for="paragraph-style">Style selected text</label><select id="paragraph-style" class="control" data-paragraph-style="field-${contentKey}-${index}-body" title="Heading 1: Ctrl+Alt+1 · Heading 2: Ctrl+Alt+2 · Normal text: Ctrl+Shift+N · Original design: Ctrl+Alt+0"><option value="">Choose a style…</option><option value="normal" title="Ctrl+Shift+N">Normal text · Ctrl+Shift+N</option><option value="heading1" title="Ctrl+Alt+1">Heading 1 · Ctrl+Alt+1</option><option value="heading2" title="Ctrl+Alt+2">Heading 2 · Ctrl+Alt+2</option><option value="ul">Bulleted list</option><option value="ol">Numbered list</option><option value="auto" title="Ctrl+Alt+0">Original design · Ctrl+Alt+0</option></select><div class="list-style-tools" role="toolbar" aria-label="Paragraph lists"><button type="button" data-list-style="ul" title="Bulleted list" aria-label="Bulleted list" aria-pressed="false">• List</button><button type="button" data-list-style="ol" title="Numbered list" aria-label="Numbered list" aria-pressed="false">1. List</button></div><div class="inline-format-tools" role="toolbar" aria-label="Format selected words"><button type="button" data-inline-format="bold" data-field="field-${contentKey}-${index}-body" title="Bold (Ctrl+B)" aria-label="Bold selected text"><b>B</b></button><button type="button" data-inline-format="italic" data-field="field-${contentKey}-${index}-body" title="Italic (Ctrl+I)" aria-label="Italic selected text"><i>I</i></button><button type="button" data-inline-format="underline" data-field="field-${contentKey}-${index}-body" title="Underline (Ctrl+U)" aria-label="Underline selected text"><u>U</u></button></div><label class="inline-color-label" for="inline-text-color">Color <input id="inline-text-color" type="color" data-inline-value-kind="color" data-field="field-${contentKey}-${index}-body" value="${esc(currentBrand()?.primary||'#1456a0')}" aria-label="Selected text color"></label><button type="button" class="style-reset" data-inline-reset="color" data-field="field-${contentKey}-${index}-body" title="Use design color">Reset color</button><select class="control inline-size" data-inline-value-kind="size" data-field="field-${contentKey}-${index}-body" aria-label="Selected text size"><option value="">Text size</option><option value="24">24 px</option><option value="28">28 px</option><option value="32">32 px</option><option value="36">36 px</option><option value="40">40 px</option><option value="48">48 px</option><option value="56">56 px</option><option value="auto">Default size</option></select><p>Select one or more paragraphs for bullet or numbered lists and headings. Select words for B, I, U, color, or size.</p></div>
         ${Array.isArray(section.rows) ? tableEditor(section,index) : ''}
         <div class="divider"></div>
         <div class="voice-header">${icon('mic')}<strong>Narration</strong><span class="badge green">FOLLOWS YOUR CONTENT</span></div>
@@ -459,7 +459,7 @@ function setInlineValue(kind,value,textarea) {
 
 function applyParagraphStyle(select,shortcutStyle) {
   const textarea=document.getElementById(select.dataset.paragraphStyle),style=shortcutStyle||select.value;
-  if(!textarea || !['auto','normal','heading1','heading2'].includes(style))return;
+  if(!textarea || !['auto','normal','heading1','heading2','ul','ol'].includes(style))return;
   select.value=style;
   const start=textarea.selectionStart,end=textarea.selectionEnd;
   const effectiveEnd=end>start && textarea.value[end-1]==='\n'?end-1:end;
@@ -472,7 +472,8 @@ function applyParagraphStyle(select,shortcutStyle) {
   section.lineStyles=styles;
   restoreTextSelection(textarea,start,end);
   queueSave();queuePreview(0);
-  toast(`${style==='auto'?'Original design':style==='normal'?'Normal text':style==='heading1'?'Heading 1':'Heading 2'} applied to ${last-first+1} ${last===first?'paragraph':'paragraphs'}.`);
+  const styleName={auto:'Original design',normal:'Normal text',heading1:'Heading 1',heading2:'Heading 2',ul:'Bulleted list',ol:'Numbered list'}[style];
+  toast(`${styleName} applied to ${last-first+1} ${last===first?'paragraph':'paragraphs'}.`);
 }
 
 function restoreTextSelection(textarea,start,end) {
@@ -500,6 +501,7 @@ function updateSelectionToolbar(textarea) {
     const shortcut=styleSelect.selectedOptions[0]?.title;
     styleSelect.title=shortcut?`${styleSelect.selectedOptions[0].textContent.split(' · ')[0]}: ${shortcut}`:'Heading 1: Ctrl+Alt+1 · Heading 2: Ctrl+Alt+2 · Normal text: Ctrl+Shift+N · Original design: Ctrl+Alt+0';
   }
+  document.querySelectorAll('[data-list-style]').forEach(button=>button.setAttribute('aria-pressed',String(styles.every(style=>style===button.dataset.listStyle))));
   const marks=section.inlineFormats||[];
   const covers=(kind,value)=>{
     const matching=marks.filter(mark=>mark.kind===kind && (value===undefined || mark.value===value)).sort((a,b)=>a.start-b.start);
@@ -749,6 +751,7 @@ document.querySelector('#app').addEventListener('click',async event=>{
       return;
     }
     if(target.dataset.inlineFormat){toggleInlineFormat(target.dataset.inlineFormat,document.getElementById(target.dataset.field));return;}
+    if(target.dataset.listStyle){const select=document.querySelector('[data-paragraph-style]');applyParagraphStyle(select,select.value===target.dataset.listStyle?'auto':target.dataset.listStyle);return;}
     if(target.dataset.inlineReset){setInlineValue(target.dataset.inlineReset,'auto',document.getElementById(target.dataset.field));return;}
     if(target.dataset.cancelJob){await api(`/api/jobs/${encodeURIComponent(target.dataset.cancelJob)}/cancel`,{method:'POST'});await refreshJobs();toast('Cancellation requested.');return;}
     if(target.dataset.deleteJob){

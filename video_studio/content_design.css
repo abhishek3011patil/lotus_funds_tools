@@ -20,6 +20,10 @@
 .insights-box .body .line.normal{font-weight:600;color:#fff}
 .insights-box .body .line.heading-one{font-size:1.15em;line-height:1.2;font-weight:800;color:#fff;margin:8px 0 6px}
 .insights-box .body .line.heading-two{font-size:1.06em;line-height:1.25;font-weight:750;color:#fff;margin:6px 0 4px}
+.body .content-list{width:100%;margin:6px 0 10px;padding-left:1.35em;list-style-position:outside}
+.body .content-list .line{padding-left:.15em;margin:0 0 5px}
+.body .content-list .line::marker{color:var(--primary);font-weight:800}
+.insights-box .body .content-list .line::marker{color:#fff}
 .body .line .fmt-bold{font-weight:800}
 .body .line .fmt-italic{font-style:italic}
 .body .line .fmt-underline{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}

@@ -82,7 +82,7 @@ def validate(project):
         if not isinstance(s.get('enabled',True),bool): raise HTTPException(422,'Slide inclusion must be true or false.')
         if len(str(s.get('body','')))>18000 or len(str(s.get('narration','')))>18000: raise HTTPException(422,'Section text is too long.')
         line_styles=s.get('lineStyles',[])
-        if not isinstance(line_styles,list) or len(line_styles)>len(s['body'].split('\n')) or any(style not in ('auto','normal','heading1','heading2') for style in line_styles):
+        if not isinstance(line_styles,list) or len(line_styles)>len(s['body'].split('\n')) or any(style not in ('auto','normal','heading1','heading2','ul','ol') for style in line_styles):
             raise HTTPException(422,'Paragraph styles must match the lines in the slide content.')
         inline_formats=s.get('inlineFormats',[])
         if not isinstance(inline_formats,list) or len(inline_formats)>400:
