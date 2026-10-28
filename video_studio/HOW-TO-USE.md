@@ -19,6 +19,8 @@ The same shared content is used for each selected company. **Lotus Insights** ca
 
 To format a paragraph like in Word, highlight any words in **Slide content** (or place the cursor on that line), then use **Style selected text**. Choose **Heading 1**, **Heading 2**, or **Normal text**. The style applies to the whole selected paragraph; select several lines to style them together. **Original design** restores the slide's automatic formatting. Check the preview before export, especially after making long lines into headings. Styling does not change the spoken words.
 
+While the cursor is in **Slide content**, press **Ctrl+Alt+1** for Heading 1, **Ctrl+Alt+2** for Heading 2, **Ctrl+Shift+N** for Normal text, or **Ctrl+Alt+0** for Original design. The shortcuts appear in the style menu and when you hover over it. Select words and press **Ctrl+B**, **Ctrl+I**, or **Ctrl+U** for bold, italic, or underline; hovering over those buttons also shows the shortcut.
+
 For individual words, select them and click **B** (bold), *I* (italic), or **U** (underline), or choose a text color or size. Click B, I, or U again to remove it. **Reset color** and **Default size** restore the slide design for selected words. Ctrl+B, Ctrl+I and Ctrl+U also work while editing Slide content. The video preview shows the finished styling; the text box keeps plain text so the voice reads the words normally.
 
 Edits save automatically on this computer. Check the **Saved locally** indicator before closing the browser.
