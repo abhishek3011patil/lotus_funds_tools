@@ -116,7 +116,7 @@ def validate(project):
         b.setdefault('includeDisclaimerPage',False)
         if not isinstance(b['includeDisclaimerPage'],bool): raise HTTPException(422,'The separate disclaimer option must be on or off.')
         if not isinstance(b.get('name'),str) or not b['name'].strip(): raise HTTPException(422,'Every brand needs a name.')
-        for key in ('logo','website','phone','email','address','disclaimer','socialText','instagram','facebook','twitter','ending_text','footer_note','introTitle'):
+        for key in ('logo','website','phone','email','address','smallDisclaimer','disclaimer','socialText','instagram','facebook','twitter','ending_text','footer_note','introTitle'):
             if key in b and (not isinstance(b[key],str) or len(b[key])>18000): raise HTTPException(422,f'Brand {key} must be text, up to 18,000 characters.')
         if 'art' in b and (not isinstance(b['art'],dict) or any(not isinstance(x,str) for x in b['art'].values())): raise HTTPException(422,'Artwork must map section names to image paths.')
         try: ending_duration=float(b.get('endingDuration',10))

@@ -290,7 +290,8 @@ function brandEditor() {
         <div class="field-row">${field('Website',`${prefix}.website`,brand.website,{placeholder:'yourwebsite.com'})}${field('Phone',`${prefix}.phone`,brand.phone,{type:'tel',placeholder:'+91 …'})}</div>
         ${field('Email',`${prefix}.email`,brand.email,{type:'email',optional:true,placeholder:'hello@yourbrand.com'})}
         ${field('Office address',`${prefix}.address`,brand.address,{textarea:true,rows:2,optional:true})}
-        ${field('Disclaimer',`${prefix}.disclaimer`,brand.disclaimer,{textarea:true,rows:6,emoji:true,hint:'Your wording is used as entered. Keep required disclosures complete and easy to read.'})}
+        ${field('Small disclaimer on ending',`${prefix}.smallDisclaimer`,brand.smallDisclaimer || 'Stock market investments are subject to market risks. Information is for educational purposes only and is not investment advice.',{textarea:true,rows:3,emoji:true,hint:'Shown on the company ending for every video, whether or not a full disclaimer page is added.'})}
+        ${field('Full-page disclaimer',`${prefix}.disclaimer`,brand.disclaimer,{textarea:true,rows:6,emoji:true,hint:'Shown on the separate full-screen page only when Full disclaimer page is on.'})}
         ${brand.ending_text !== undefined || brand.layout==='insights' ? field('Closing message',`${prefix}.ending_text`,brand.ending_text || '',{textarea:true,rows:3,emoji:true,optional:true}) : ''}
         ${brand.footer_note !== undefined ? field('Footer note',`${prefix}.footer_note`,brand.footer_note || '',{textarea:true,rows:2,optional:true}) : ''}
         ${field('Social / follow message',`${prefix}.socialText`,brand.socialText || '',{optional:true,placeholder:'Subscribe for your daily market update'})}

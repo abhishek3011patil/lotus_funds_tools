@@ -360,7 +360,7 @@ def sections_for(project, brand):
         else:
             output.append(section.copy())
     separate=brand.get('includeDisclaimerPage', brand.get('endingStyle')=='disclaimer')
-    closing_text=brand.get('ending_text','FOLLOW FOR MORE MARKET NEWS!') if brand.get('endingStyle')=='follow' else brand.get('disclaimer','')
+    closing_text=brand.get('ending_text','FOLLOW FOR MORE MARKET NEWS!') if brand.get('endingStyle')=='follow' else brand.get('smallDisclaimer') or 'Stock market investments are subject to market risks. Information is for educational purposes only and is not investment advice.'
     output.append({'id':'ending','title':'Company ending','body':closing_text,'duration':brand.get('endingDuration',10),'silent':bool(separate) or not project['settings'].get('readDisclaimer',False)})
     if separate:
         output.append({'id':'disclaimer','title':'Full-screen disclaimer','body':brand.get('disclaimer',''),'duration':brand.get('endingDuration',10),'silent':not project['settings'].get('readDisclaimer',False)})
